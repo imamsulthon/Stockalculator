@@ -30,15 +30,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mamsky.stockalculator.android.screen.onlyNumeric
+import com.mamsky.stockalculator.android.screen.percentFormat
 import com.mamsky.stockalculator.android.shared.Container
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.VSpacer
+import kotlin.math.abs
 
 @Composable
 fun AraArbScreen(
@@ -65,7 +68,7 @@ private fun Content(
                 navigationIcon = {
                     Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "ic_settings")
                 },
-                title = { Text(text = "ARA & ARB") },
+                title = { Text(text = "Auto Rejection (ARA & ARB)") },
             )
         }
     ) { paddingValues ->
@@ -103,12 +106,12 @@ private fun Content(
                 }
 
                 item {
-                    log("size ${list.size}")
                     list.forEach {
                         when (it.type) {
                             ARType.EQUAL.index -> {
-                                EqualItem(data = it.price)
                                 VSpacer(5.dp)
+                                EqualItem(data = it.price)
+                                VSpacer(10.dp)
                             }
                             ARType.ARA.index -> {
                                 AraItem(data = it)
@@ -128,12 +131,51 @@ private fun Content(
 
 private fun log(m: String) = println("AraArb $m")
 
-private val colorAra = Color.Green.copy(alpha = 0.8f)
+private val colorAra = Color.Blue.copy(alpha = 0.8f)
 private val colorArb = Color.Red.copy(alpha = 0.6f)
 private val colorEqual = Color.DarkGray.copy(alpha = 0.9f)
 
 @Composable
 private fun AraItem(data: AutoRejection) {
+    Card(
+        shape = RoundedCornerShape(5.dp),
+        border = BorderStroke(
+            width = 1.dp,
+            color = Color.Blue,
+        ),
+    ) {
+        Row(modifier = Modifier
+            .padding(horizontal = 10.dp)
+            .padding(bottom = 5.dp)) {
+            VSpacer(4.dp)
+            Row(
+                modifier = Modifier.weight(2f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Container(weight = 1f) {
+                    Text(text = "ARA ${data.index}", style = MaterialTheme.typography.labelLarge)
+                    Text(text = "Rp ${data.price}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                }
+                HSpacer(2.dp)
+                Text(text = "+${data.increase}", modifier = Modifier.weight(1f), color = colorAra)
+            }
+            HSpacer(2.dp)
+            Container(weight = 1.5f) {
+                Text(text = "Percentage", style = MaterialTheme.typography.labelSmall)
+                Text(text = "${data.percentage.percentFormat()}%", style = MaterialTheme.typography.bodyMedium, color = colorAra)
+            }
+            HSpacer(2.dp)
+            Container(weight = 1.5f) {
+                Text(text = "Total Percentage", style = MaterialTheme.typography.labelSmall)
+                Text(text = "${data.totalPercentage.percentFormat()}%", style = MaterialTheme.typography.bodyMedium, color = colorAra)
+            }
+        }
+    }
+}
+
+@Composable
+private fun EqualItem(data: Int) {
     Card(
         shape = RoundedCornerShape(5.dp),
         border = BorderStroke(
@@ -146,52 +188,13 @@ private fun AraItem(data: AutoRejection) {
             .padding(bottom = 5.dp)) {
             VSpacer(4.dp)
             Row(
-                modifier = Modifier.weight(2f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
-            ) {
-                Container(weight = 1f) {
-                    Text(text = "ARA #${data.index}", style = MaterialTheme.typography.labelLarge)
-                    Text(text = "Rp ${data.price}", style = MaterialTheme.typography.bodyLarge)
-                }
-                HSpacer(2.dp)
-                Text(text = "+${data.increase}", modifier = Modifier.weight(1f))
-            }
-            HSpacer(2.dp)
-            Container(weight = 1.5f) {
-                Text(text = "Percentage", style = MaterialTheme.typography.labelSmall)
-                Text(text = "${data.percentage}%", style = MaterialTheme.typography.bodyMedium, color = colorAra)
-            }
-            HSpacer(2.dp)
-            Container(weight = 1.5f) {
-                Text(text = "Total Percentage", style = MaterialTheme.typography.labelSmall)
-                Text(text = "${data.totalPercentage}%", style = MaterialTheme.typography.bodyMedium, color = colorAra)
-            }
-        }
-    }
-}
-
-@Composable
-private fun EqualItem(data: Int) {
-    Card(
-        shape = RoundedCornerShape(5.dp),
-        border = BorderStroke(
-            width = 1.dp,
-            color = Color.Yellow,
-        ),
-    ) {
-        Row(modifier = Modifier
-            .padding(horizontal = 10.dp)
-            .padding(bottom = 5.dp)) {
-            VSpacer(4.dp)
-            Row(
-                modifier = Modifier.weight(2f),
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
             ) {
                 Container(weight = 1f) {
                     Text(text = "Price", style = MaterialTheme.typography.labelMedium)
-                    Text(text = "Rp $data", style = MaterialTheme.typography.bodyLarge)
+                    Text(text = "Rp $data", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
                 HSpacer(2.dp)
                 Text(text = "+0", modifier = Modifier.weight(1f))
@@ -199,12 +202,12 @@ private fun EqualItem(data: Int) {
             HSpacer(2.dp)
             Container(weight = 1f) {
                 Text(text = "Percentage", style = MaterialTheme.typography.labelSmall)
-                Text(text = "0 %", style = MaterialTheme.typography.bodyMedium, color = colorEqual)
+                Text(text = "0%", style = MaterialTheme.typography.bodyMedium, color = colorEqual)
             }
             HSpacer(2.dp)
             Container(weight = 1.2f) {
                 Text(text = "Total Percentage", style = MaterialTheme.typography.labelSmall)
-                Text(text = "0 %", style = MaterialTheme.typography.bodyMedium, color = colorEqual)
+                Text(text = "0%", style = MaterialTheme.typography.bodyMedium, color = colorEqual)
             }
         }
     }
@@ -230,21 +233,22 @@ private fun ArbItem(data: AutoRejection) {
                 horizontalArrangement = Arrangement.Start
             ) {
                 Container(weight = 1f) {
-                    Text(text = "ARB #${data.index}", style = MaterialTheme.typography.labelMedium)
-                    Text(text = "Rp ${data.price}", style = MaterialTheme.typography.bodyLarge, )
+                    Text(text = "ARB ${abs(data.index)}", style = MaterialTheme.typography.labelMedium)
+                    Text(text = "Rp ${data.price}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
                 HSpacer(2.dp)
-                Text(text = "+${data.increase}", modifier = Modifier.weight(1f))
+                Text(text = "${data.increase}", modifier = Modifier.weight(1f), color = colorArb)
             }
             HSpacer(2.dp)
             Container(weight = 1.5f) {
                 Text(text = "Percentage", style = MaterialTheme.typography.labelSmall)
-                Text(text = "${data.percentage} %", style = MaterialTheme.typography.bodyMedium, color = colorArb)
+                Text(text = "${data.percentage.percentFormat()}%", style = MaterialTheme.typography.bodyMedium, color = colorArb)
             }
+            "%.2f".format(data.totalPercentage)
             HSpacer(2.dp)
             Container(weight = 1.5f) {
                 Text(text = "Total Percentage", style = MaterialTheme.typography.labelSmall)
-                Text(text = "${data.totalPercentage} %", style = MaterialTheme.typography.bodyMedium, color = colorArb)
+                Text(text = "${data.totalPercentage.percentFormat()}%", style = MaterialTheme.typography.bodyMedium, color = colorArb)
             }
         }
     }
@@ -253,12 +257,6 @@ private fun ArbItem(data: AutoRejection) {
 @Preview(showSystemUi = true, showBackground = true, uiMode = UI_MODE_NIGHT_YES)
 @Composable
 fun AraArbScreen_Preview() {
-    val list = listOf(
-        AutoRejection(2, 0f, 0f, 0, 0),
-        AutoRejection(1, 0f, 0f, 0, 0),
-        AutoRejection(),
-        AutoRejection(-1, 0f, 0f, 0, 0),
-        AutoRejection(-2, 0f, 0f, 0, 0)
-    )
+    val list = RejectionEngineImpl().calculate(102)
     Content(list = list, calculate = {})
 }
