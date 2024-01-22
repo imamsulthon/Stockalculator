@@ -12,11 +12,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -39,7 +40,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,8 +50,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mamsky.stockalculator.android.screen.asString
 import com.mamsky.stockalculator.android.screen.onlyNumeric
+import com.mamsky.stockalculator.android.screen.orZero
+import com.mamsky.stockalculator.android.screen.rupiah
 import com.mamsky.stockalculator.android.shared.Container
+import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.VSpacer
 
@@ -75,7 +79,8 @@ fun TradingReturnScreen(
         buyResult = buyData,
         sellResult = sellData,
         resultCalculation = result,
-        changeFee = { showModal = true }
+        changeFee = { showModal = true },
+        onClear = {}
     )
 
     if (showModal) {
@@ -104,15 +109,16 @@ private fun Content(
     sellResult: ResultSell = ResultSell(),
     resultCalculation: ResultCalculation = ResultCalculation(),
     onCalculate: (InputModel) -> Unit,
+    onClear: () -> Unit,
     changeFee: () -> Unit,
 ) {
-    var buyPrice by remember { mutableIntStateOf(0) }
-    var sellPrice by remember { mutableIntStateOf(0) }
-    var lot by remember { mutableIntStateOf(0) }
+    var buyPrice: Int? by remember { mutableStateOf(0) }
+    var sellPrice: Int? by remember { mutableStateOf(0) }
+    var lot: Int? by remember { mutableStateOf(0) }
     var withBrokerFee by remember { mutableStateOf(false) }
     val brokerFeeSell by remember(initInput.feeForSell) { mutableFloatStateOf(initInput.feeForSell) }
     val brokerFeeBuy by remember(initInput.feeForBuy) { mutableFloatStateOf(initInput.feeForBuy) }
-    val enableButton by remember(lot) { mutableStateOf(lot > 0) }
+    val enableButton by remember(lot) { mutableStateOf(lot != null && lot!! > 0) }
 
     Scaffold(
         topBar = {
@@ -142,7 +148,7 @@ private fun Content(
                 ) {
                     InputField(
                         modifier = Modifier.weight(1f),
-                        label = "Buy Price", value = buyPrice.toString(), onValueChange = {
+                        label = "Buy Price", value = buyPrice.asString(), onValueChange = {
                             buyPrice = it.onlyNumeric()
                         },
                         imeAction = ImeAction.Next
@@ -150,7 +156,7 @@ private fun Content(
                     Spacer(modifier = Modifier.width(10.dp))
                     InputField(
                         modifier = Modifier.weight(1f),
-                        label = "Sell Price", value = sellPrice.toString(), onValueChange = {
+                        label = "Sell Price", value = sellPrice.asString(), onValueChange = {
                             sellPrice = it.onlyNumeric()
                         },
                         imeAction = ImeAction.Next
@@ -159,8 +165,8 @@ private fun Content(
                     InputField(
                         modifier = Modifier.weight(1f),
                         usePrefix = false,
-                        label = "Lot", value = lot.toString(), onValueChange = {
-                            lot = it.toInt()
+                        label = "Lot", value = lot.asString(), onValueChange = {
+                            lot = it.onlyNumeric()
                         })
                 }
             }
@@ -197,15 +203,27 @@ private fun Content(
                     }
                 }
                 VSpacer(10.dp)
-                Button(
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        onCalculate.invoke(
-                            InputModel(buyPrice, sellPrice, lot, brokerFeeBuy, brokerFeeSell)
-                        )
-                    }, enabled = enableButton,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = "Calculate")
+                    Button(
+                        modifier = Modifier.fillMaxWidth(0.85f),
+                        onClick = {
+                            onCalculate.invoke(
+                                InputModel(buyPrice.orZero(), sellPrice.orZero(), lot.orZero(), brokerFeeBuy, brokerFeeSell)
+                            )
+                        }, enabled = enableButton,
+                    ) {
+                        Text(text = "Calculate")
+                    }
+                    HSpacer(10.dp)
+                    OutlinedIconButton(
+                        modifier = Modifier.wrapContentSize(),
+                        onClick = onClear::invoke
+                    ) {
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = "ic_delete")
+                    }
                 }
                 VSpacer()
             }
@@ -229,7 +247,7 @@ private fun Content(
 fun CalculationResult(
     data: ResultCalculation,
 ) {
-    CardContainer(title = "Calculation Result", onRemove = {},
+    CardContainer(title = "Calculation Result", onRemove = {}, borderColor = Color.Magenta,
         first = {
             Container {
                 Text(text = "Status", style = MaterialTheme.typography.bodyMedium)
@@ -237,17 +255,17 @@ fun CalculationResult(
             }
             Container(Alignment.End) {
                 Text(text = "Profit", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Rp ${data.profit}", style = MaterialTheme.typography.bodySmall)
+                Text(text = "Rp ${data.profit.rupiah()}", style = MaterialTheme.typography.bodySmall)
             }
         },
         second = {
             Container {
                 Text(text = "Total Fee", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Rp ${data.totalFee}", style = MaterialTheme.typography.bodySmall)
+                Text(text = "Rp ${data.totalFee.rupiah()}", style = MaterialTheme.typography.bodySmall)
             }
             Container(Alignment.End) {
                 Text(text = "Net Profit", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Rp ${data.netProfit}", style = MaterialTheme.typography.bodySmall)
+                Text(text = "Rp ${data.netProfit.rupiah()}", style = MaterialTheme.typography.bodySmall)
             }
         }
     )
@@ -257,19 +275,19 @@ fun CalculationResult(
 private fun SellResult(
     data: ResultSell = ResultSell()
 ) {
-    CardContainer(title = "Sell Result", onRemove = {},
+    CardContainer(title = "Sell Result", onRemove = {}, borderColor = Color.Red,
         first = {
             Container {
                 Text(text = "Sell Price", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "Rp ${data.sellPrice} x ${data.lot} lot",
+                    text = "Rp ${data.sellPrice.rupiah()} x ${data.lot} lot",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
             Container(Alignment.End) {
                 Text(text = "Sell Value", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "Rp ${data.sellValue}",
+                    text = "Rp ${data.sellValue.rupiah()}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -281,7 +299,7 @@ private fun SellResult(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Rp ${data.fee}",
+                    text = "Rp ${data.fee.rupiah()}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -291,7 +309,7 @@ private fun SellResult(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Rp ${data.totalReceived}",
+                    text = "Rp ${data.totalReceived.rupiah()}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -303,19 +321,19 @@ private fun SellResult(
 private fun BuyResult(
     data: ResultBuy = ResultBuy()
 ) {
-    CardContainer(title = "Buy Result", onRemove = {},
+    CardContainer(title = "Buy Result", onRemove = {}, borderColor = Color.Green,
         first = {
             Container {
                 Text(text = "Buy Price", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "Rp ${data.price} x ${data.lot} lot",
+                    text = "Rp ${data.price.rupiah()} x ${data.lot} lot",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
             Container(alignment = Alignment.End) {
                 Text(text = "Buy Value", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "Rp ${data.buyValue}",
+                    text = "Rp ${data.buyValue.rupiah()}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -327,14 +345,14 @@ private fun BuyResult(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Rp ${(data.price * data.fee)}",
+                    text = "Rp ${(data.price * data.fee).rupiah()}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
             Container(Alignment.End) {
                 Text(text = "Total Paid", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "Rp ${data.totalPaid}",
+                    text = "Rp ${data.totalPaid.rupiah()}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -346,6 +364,7 @@ private fun BuyResult(
 internal fun CardContainer(
     title: String,
     onRemove: () -> Unit,
+    borderColor: Color = Color.Blue,
     first: @Composable RowScope.() -> Unit,
     second: @Composable RowScope.() -> Unit
 ) {
@@ -353,7 +372,7 @@ internal fun CardContainer(
         shape = RoundedCornerShape(5.dp),
         border = BorderStroke(
             width = 1.dp,
-            color = Color.Blue,
+            color = borderColor,
         ),
         modifier = Modifier.padding(5.dp),
     ) {
@@ -363,26 +382,15 @@ internal fun CardContainer(
                 .padding(horizontal = 10.dp, vertical = 5.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = title, style = MaterialTheme.typography.titleMedium)
-            OutlinedIconButton(
-                modifier = Modifier.size(20.dp),
-                onClick = onRemove::invoke,
-            ) {
-                Icon(
-                    modifier = Modifier.size(12.dp),
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "ic_settings"
-                )
-            }
+            Text(text = title, style = MaterialTheme.typography.titleMedium)
         }
 
-        Divider(thickness = 1.dp, color = Color.Gray)
+        Divider(thickness = 1.dp, color = borderColor)
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 4.dp),
+                .padding(horizontal = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             first()
@@ -390,7 +398,8 @@ internal fun CardContainer(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp).padding(bottom = 4.dp),
+                .padding(horizontal = 10.dp)
+                .padding(bottom = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             second()
@@ -416,7 +425,11 @@ fun ChangeFeeContent(
             .padding(bottom = 30.dp),
     ) {
         Column {
-            Text(text = "Set Fee", style = MaterialTheme.typography.titleLarge)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(imageVector = Icons.Default.Settings, contentDescription = "ic_settings")
+                HSpacer(10.dp)
+                Text(text = "Set Fee", style = MaterialTheme.typography.titleLarge)
+            }
             VSpacer()
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween

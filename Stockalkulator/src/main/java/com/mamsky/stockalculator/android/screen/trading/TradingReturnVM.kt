@@ -21,7 +21,7 @@ class TradingReturnVM @Inject constructor(): ViewModel() {
     val result: StateFlow<ResultCalculation> = _result.asStateFlow()
 
     fun initCalculate(params: InputModel) {
-        val buyValue = params.buy.toFloat() * params.lot
+        val buyValue = params.buy.toFloat() * params.lot * 100
         val buyFee = buyValue * params.feeForBuy
         _buyData.update {
             it.copy(
@@ -33,7 +33,7 @@ class TradingReturnVM @Inject constructor(): ViewModel() {
                 totalPaid = buyValue - buyFee
             )
         }
-        val sellValue = params.sell.toFloat() * params.lot
+        val sellValue = params.sell.toFloat() * params.lot * 100
         val sellFee = params.feeForSell * sellValue
         _sellData.update {
             it.copy(
@@ -45,7 +45,7 @@ class TradingReturnVM @Inject constructor(): ViewModel() {
                 totalReceived = sellValue - sellFee
             )
         }
-        val profit: Double = ((params.sell - params.buy) * params.lot).toDouble()
+        val profit: Double = ((params.sell - params.buy) * params.lot * 100).toDouble()
         val netProfit = (sellValue - sellFee) - (buyValue - buyFee)
         val totalFee = buyFee + sellFee
         _result.update {

@@ -32,6 +32,10 @@ class AveragePriceVM @Inject constructor(): ViewModel() {
         calculate()
     }
 
+    fun clear() {
+        _items.clear()
+    }
+
     private fun calculate() {
         val total = _items.sumOf { it.price * it.lot * 100 }
         val lots = _items.sumOf { it.lot }

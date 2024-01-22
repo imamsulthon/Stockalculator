@@ -23,7 +23,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,6 +34,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mamsky.stockalculator.android.screen.asString
 import com.mamsky.stockalculator.android.screen.onlyNumeric
 import com.mamsky.stockalculator.android.screen.percentFormat
 import com.mamsky.stockalculator.android.shared.Container
@@ -60,8 +60,10 @@ private fun Content(
     list: List<AutoRejection>,
     calculate: (Int) -> Unit,
 ) {
-    var price by remember { mutableIntStateOf(0) }
-    val enableButton by remember(price) { mutableStateOf(price > 0) }
+    var price: Int? by remember { mutableStateOf(0) }
+    val enableButton by remember(price) { mutableStateOf(
+        if (price == null) false else price!! > 0
+    ) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -86,7 +88,7 @@ private fun Content(
                         InputField(
                             modifier = Modifier.weight(1f),
                             label = "Price",
-                            value = price.toString(),
+                            value = price.asString(),
                             onValueChange = {
                                 price = it.onlyNumeric()
                             },
@@ -99,7 +101,7 @@ private fun Content(
                 item {
                     Button(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { calculate.invoke(price) },
+                        onClick = { calculate.invoke(price?:0) },
                         enabled = enableButton
                     ) { Text(text = "Calculate") }
                     VSpacer()
