@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.araarb.AraArbScreen
 import com.mamsky.stockalculator.android.screen.average.AveragePrice
+import com.mamsky.stockalculator.android.screen.profit.ProfitPerTickScreen
 import com.mamsky.stockalculator.android.screen.trading.TradingReturnScreen
 
 
@@ -26,6 +27,9 @@ fun AppNavigation(
                 },
                 araArb = {
                     navController.navigate(Route.AutoRejection)
+                },
+                profit = {
+                    navController.navigate(Route.ProfitPerTick)
                 }
             )
         }
@@ -41,6 +45,10 @@ fun AppNavigation(
         composable(Route.AutoRejection) {
             AraArbScreen()
         }
+
+        composable(Route.ProfitPerTick) {
+            ProfitPerTickScreen()
+        }
     }
 }
 
@@ -49,4 +57,5 @@ object Route {
     const val TradingReturn = "trading-return"
     const val AveragePrice = "average-price"
     const val AutoRejection = "auto-rejection"
+    const val ProfitPerTick = "profit-per-tick"
 }

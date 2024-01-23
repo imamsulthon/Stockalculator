@@ -2,6 +2,7 @@ package com.mamsky.stockalculator.android.screen.average
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
+import com.mamsky.stockalculator.android.screen.araarb.sheet
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,7 @@ class AveragePriceVM @Inject constructor(): ViewModel() {
     val average: StateFlow<AverageItem> = _average.asStateFlow()
 
     fun buy(price: Int, lot: Int) {
-        val x = price * lot * 100
+        val x = price * lot.sheet()
         val item = BuyItemModel(id = getId(), price = price, lot = lot).apply {
             total = x
         }
@@ -37,7 +38,7 @@ class AveragePriceVM @Inject constructor(): ViewModel() {
     }
 
     private fun calculate() {
-        val total = _items.sumOf { it.price * it.lot * 100 }
+        val total = _items.sumOf { it.price * it.lot.sheet() }
         val lots = _items.sumOf { it.lot }
 
         val av = (total.toFloat()/lots)

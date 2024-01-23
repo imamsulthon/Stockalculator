@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -32,12 +31,14 @@ import com.mamsky.stockalculator.android.shared.VSpacer
 fun HomeScreen(
     trading: () -> Unit,
     average: () -> Unit,
-    araArb: () -> Unit
+    araArb: () -> Unit,
+    profit: () -> Unit,
 ) {
     HomeScreenContent(
         trading = trading::invoke,
         average = average::invoke,
-        araArb = araArb::invoke
+        araArb = araArb::invoke,
+        profit = profit::invoke
     )
 }
 
@@ -46,7 +47,8 @@ fun HomeScreen(
 internal fun HomeScreenContent(
     trading: () -> Unit,
     average: () -> Unit,
-    araArb: () -> Unit
+    araArb: () -> Unit,
+    profit: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -71,6 +73,10 @@ internal fun HomeScreenContent(
                 VSpacer(10.dp)
                 MenuItem(title = "ARA & ARB") {
                     araArb.invoke()
+                }
+                VSpacer(10.dp)
+                MenuItem(title = "Profit Per Tick") {
+                    profit.invoke()
                 }
 
             }
@@ -106,5 +112,5 @@ private fun MenuItem(
 @Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO)
 @Composable
 private fun HomeScreen_Preview() {
-    HomeScreen(trading = {}, araArb = {}, average = {})
+    HomeScreen(trading = {}, araArb = {}, average = {}, profit = {})
 }

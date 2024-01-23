@@ -20,11 +20,13 @@ fun Int.fractionArb(): Float {
 
 fun Int.fraction(): Int {
     return when {
-        this < 200 -> 1
-        this in 200..< 500 -> 2
-        this in 500..< 2000 -> 5
-        this in 2000..< 5000 -> 10
-        this > 5000 -> 25
+        this < 50 -> 1
+        this in 200..< 501 -> 2
+        this in 500..< 2001 -> 5
+        this in 2000..< 5001 -> 10
+        this >= 5001 -> 25
         else -> 1
     }
 }
+
+fun Int.sheet() = this * 100

@@ -1,6 +1,7 @@
 package com.mamsky.stockalculator.android.screen.trading
 
 import androidx.lifecycle.ViewModel
+import com.mamsky.stockalculator.android.screen.araarb.sheet
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +22,7 @@ class TradingReturnVM @Inject constructor(): ViewModel() {
     val result: StateFlow<ResultCalculation> = _result.asStateFlow()
 
     fun initCalculate(params: InputModel) {
-        val buyValue = params.buy.toFloat() * params.lot * 100
+        val buyValue = params.buy.toFloat() * params.lot.sheet()
         val buyFee = buyValue * params.feeForBuy
         _buyData.update {
             it.copy(
@@ -33,7 +34,7 @@ class TradingReturnVM @Inject constructor(): ViewModel() {
                 totalPaid = buyValue - buyFee
             )
         }
-        val sellValue = params.sell.toFloat() * params.lot * 100
+        val sellValue = params.sell.toFloat() * params.lot.sheet()
         val sellFee = params.feeForSell * sellValue
         _sellData.update {
             it.copy(
@@ -45,7 +46,7 @@ class TradingReturnVM @Inject constructor(): ViewModel() {
                 totalReceived = sellValue - sellFee
             )
         }
-        val profit: Double = ((params.sell - params.buy) * params.lot * 100).toDouble()
+        val profit: Double = ((params.sell - params.buy) * params.lot.sheet()).toDouble()
         val netProfit = (sellValue - sellFee) - (buyValue - buyFee)
         val totalFee = buyFee + sellFee
         _result.update {

@@ -44,7 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mamsky.stockalculator.android.screen.asString
-import com.mamsky.stockalculator.android.screen.onlyNumeric
+import com.mamsky.stockalculator.android.screen.onlyInt
 import com.mamsky.stockalculator.android.screen.rupiah
 import com.mamsky.stockalculator.android.screen.trading.InputModel
 import com.mamsky.stockalculator.android.shared.Container
@@ -111,7 +111,7 @@ private fun Content(
                     InputField(
                         modifier = Modifier.weight(1f),
                         label = "Price", value = buyPrice.asString(), onValueChange = {
-                            buyPrice = it.onlyNumeric()
+                            buyPrice = it.onlyInt()
                         },
                         textStyle = MaterialTheme.typography.bodyMedium,
                         imeAction = ImeAction.Next
@@ -122,7 +122,7 @@ private fun Content(
                         modifier = Modifier.weight(1f),
                         textStyle = MaterialTheme.typography.bodyMedium,
                         label = "Lot", value = lot.asString(), onValueChange = {
-                            lot = it.onlyNumeric()
+                            lot = it.onlyInt()
                         },
                         imeAction = ImeAction.Done
                     )

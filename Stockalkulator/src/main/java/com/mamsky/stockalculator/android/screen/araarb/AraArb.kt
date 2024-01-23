@@ -35,7 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mamsky.stockalculator.android.screen.asString
-import com.mamsky.stockalculator.android.screen.onlyNumeric
+import com.mamsky.stockalculator.android.screen.onlyInt
 import com.mamsky.stockalculator.android.screen.percentFormat
 import com.mamsky.stockalculator.android.shared.Container
 import com.mamsky.stockalculator.android.shared.HSpacer
@@ -90,7 +90,7 @@ private fun Content(
                             label = "Price",
                             value = price.asString(),
                             onValueChange = {
-                                price = it.onlyNumeric()
+                                price = it.onlyInt()
                             },
                             imeAction = ImeAction.Next
                         )

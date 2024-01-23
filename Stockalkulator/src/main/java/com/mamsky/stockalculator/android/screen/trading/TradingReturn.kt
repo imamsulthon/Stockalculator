@@ -2,7 +2,6 @@ package com.mamsky.stockalculator.android.screen.trading
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -27,10 +26,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -51,13 +48,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mamsky.stockalculator.android.screen.asString
-import com.mamsky.stockalculator.android.screen.onlyNumeric
+import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
+import com.mamsky.stockalculator.android.screen.onlyInt
 import com.mamsky.stockalculator.android.screen.orZero
 import com.mamsky.stockalculator.android.screen.rupiah
 import com.mamsky.stockalculator.android.shared.Container
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.VSpacer
+import com.mamsky.stockalculator.android.shared.color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -149,7 +148,7 @@ private fun Content(
                     InputField(
                         modifier = Modifier.weight(1f),
                         label = "Buy Price", value = buyPrice.asString(), onValueChange = {
-                            buyPrice = it.onlyNumeric()
+                            buyPrice = it.onlyInt()
                         },
                         imeAction = ImeAction.Next
                     )
@@ -157,7 +156,7 @@ private fun Content(
                     InputField(
                         modifier = Modifier.weight(1f),
                         label = "Sell Price", value = sellPrice.asString(), onValueChange = {
-                            sellPrice = it.onlyNumeric()
+                            sellPrice = it.onlyInt()
                         },
                         imeAction = ImeAction.Next
                     )
@@ -166,7 +165,7 @@ private fun Content(
                         modifier = Modifier.weight(1f),
                         usePrefix = false,
                         label = "Lot", value = lot.asString(), onValueChange = {
-                            lot = it.onlyNumeric()
+                            lot = it.onlyInt()
                         })
                 }
             }
@@ -255,17 +254,17 @@ fun CalculationResult(
             }
             Container(Alignment.End) {
                 Text(text = "Profit", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Rp ${data.profit.rupiah()}", style = MaterialTheme.typography.bodySmall)
+                Text(text = "Rp ${data.profit.rupiah()}", style = MaterialTheme.typography.bodySmall, color = data.profit.color())
             }
         },
         second = {
             Container {
                 Text(text = "Total Fee", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Rp ${data.totalFee.rupiah()}", style = MaterialTheme.typography.bodySmall)
+                Text(text = "Rp ${data.totalFee.rupiah()}", style = MaterialTheme.typography.bodySmall, color = data.totalFee.color())
             }
             Container(Alignment.End) {
                 Text(text = "Net Profit", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Rp ${data.netProfit.rupiah()}", style = MaterialTheme.typography.bodySmall)
+                Text(text = "Rp ${data.netProfit.rupiah()}", style = MaterialTheme.typography.bodySmall, color = data.netProfit.color())
             }
         }
     )
@@ -403,67 +402,6 @@ internal fun CardContainer(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             second()
-        }
-    }
-}
-
-@Composable
-fun ChangeFeeContent(
-    buy: Float? = 0f,
-    sell: Float? = 0f,
-    onApply: (Float, Float) -> Unit
-) {
-    var buyFee by remember {
-        mutableStateOf(buy)
-    }
-    var sellFee by remember {
-        mutableStateOf(sell)
-    }
-    Surface(
-        modifier = Modifier
-            .padding(horizontal = 10.dp)
-            .padding(bottom = 30.dp),
-    ) {
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = Icons.Default.Settings, contentDescription = "ic_settings")
-                HSpacer(10.dp)
-                Text(text = "Set Fee", style = MaterialTheme.typography.titleLarge)
-            }
-            VSpacer()
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                InputField(
-                    modifier = Modifier.weight(1f),
-                    label = "Buy Fee", value = buyFee.toString(), onValueChange = {
-                        buyFee = it.toFloat()
-                    }
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                InputField(modifier = Modifier.weight(1f),
-                    label = "Sell Fee", value = sellFee.toString(), onValueChange = {
-                        sellFee = it.toFloat()
-                    }
-                )
-            }
-            VSpacer()
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                OutlinedButton(onClick = { /*TODO*/ }) {
-                    Text(text = "Cancel")
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-                Button(onClick = {
-                    onApply.invoke(buyFee ?: 0f, sellFee ?: 0f)
-                }) {
-                    Text(text = "Apply")
-                }
-            }
         }
     }
 }
