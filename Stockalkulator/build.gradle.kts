@@ -38,6 +38,13 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    sourceSets {
+        getByName("main") {
+            assets {
+                srcDirs("src/main/assets", "src/main/drawable")
+            }
+        }
+    }
 }
 
 dependencies {
@@ -45,6 +52,7 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.viewmodel)
     implementation(libs.compose.navigation)

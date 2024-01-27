@@ -30,24 +30,31 @@ fun AppNavigation(
                 },
                 profit = {
                     navController.navigate(Route.ProfitPerTick)
+                },
+                allCalculator = {
+                    navController.navigate(Route.AllCalculator)
                 }
             )
         }
 
         composable(Route.TradingReturn) {
-            TradingReturnScreen()
+            TradingReturnScreen(navController = navController)
         }
 
         composable(Route.AveragePrice) {
-            AveragePrice()
+            AveragePrice(navController = navController)
         }
 
         composable(Route.AutoRejection) {
-            AraArbScreen()
+            AraArbScreen(navController = navController)
         }
 
         composable(Route.ProfitPerTick) {
-            ProfitPerTickScreen()
+            ProfitPerTickScreen(navController = navController)
+        }
+
+        composable(Route.AllCalculator) {
+            AllCalculatorScreen()
         }
     }
 }
@@ -58,4 +65,5 @@ object Route {
     const val AveragePrice = "average-price"
     const val AutoRejection = "auto-rejection"
     const val ProfitPerTick = "profit-per-tick"
+    const val AllCalculator = "all-calculator"
 }

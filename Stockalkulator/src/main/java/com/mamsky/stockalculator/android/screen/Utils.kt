@@ -12,7 +12,7 @@ fun Int?.asString(): String = this?.toString() ?: ""
 fun Float?.asString(): String = this?.toString() ?: ""
 
 fun String.onlyInt(): Int? = if (this.isEmpty()) null else this.replace("[^0-9]".toRegex(), "").toInt()
-fun String.onlyFloat(): Float? = if (this.isEmpty()) null else this.replace("[^0-9]".toRegex(), "").toFloat()
+fun String.onlyFloat(): Float? = if (this.isEmpty()) null else this.toFloatOrNull()
 
 fun Int.percentOf(from: Int): Float {
     val diff = (this - from).toDouble()

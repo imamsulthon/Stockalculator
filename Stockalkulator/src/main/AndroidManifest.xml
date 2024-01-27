@@ -5,6 +5,7 @@
         android:name=".StockalkulatorApp"
         android:allowBackup="false"
         android:supportsRtl="true"
+        android:icon="@drawable/calculator"
         android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"

@@ -1,6 +1,6 @@
 package com.mamsky.stockalculator.android.screen.araarb
 
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -9,17 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,29 +27,48 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.asString
 import com.mamsky.stockalculator.android.screen.onlyInt
 import com.mamsky.stockalculator.android.screen.percentFormat
 import com.mamsky.stockalculator.android.shared.Container
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
+import com.mamsky.stockalculator.android.shared.MainContent
+import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
 import kotlin.math.abs
 
 @Composable
 fun AraArbScreen(
+    viewModel: AraArbVM = hiltViewModel(),
+    navController: NavController = rememberNavController()
+) {
+    val items by viewModel.allItems.collectAsState()
+    MainContent(
+        title = "Auto Rejection (ARA & ARB)",
+        onBack = navController::popBackStack
+    ) {
+        AutoRejection_Content(
+            items,
+            calculate = viewModel::calculate,
+        )
+    }
+}
+
+@Composable
+fun AutoRejectionPage(
     viewModel: AraArbVM = hiltViewModel()
 ) {
     val items by viewModel.allItems.collectAsState()
-    Content(
-        items,
-        calculate = { viewModel.calculate(it) }
-    )
+    PageContent(title = "Auto Rejection (ARA & ARB)") {
+        AutoRejection_Content(items, calculate = viewModel::calculate,)
+    }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Content(
+fun AutoRejection_Content(
     list: List<AutoRejection>,
     calculate: (Int) -> Unit,
 ) {
@@ -64,74 +76,59 @@ private fun Content(
     val enableButton by remember(price) { mutableStateOf(
         if (price == null) false else price!! > 0
     ) }
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                navigationIcon = {
-                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "ic_settings")
-                },
-                title = { Text(text = "Auto Rejection (ARA & ARB)") },
-            )
-        }
-    ) { paddingValues ->
-        Surface(modifier = Modifier.padding(paddingValues)) {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(12.dp)
-                    .fillMaxSize()
+    LazyColumn(
+        modifier = Modifier
+            .padding(12.dp)
+            .fillMaxSize()
+    ) {
+        item {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                item {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        InputField(
-                            modifier = Modifier.weight(1f),
-                            label = "Price",
-                            value = price.asString(),
-                            onValueChange = {
-                                price = it.onlyInt()
-                            },
-                            imeAction = ImeAction.Next
-                        )
+                InputField(
+                    modifier = Modifier.weight(1f),
+                    label = "Price",
+                    value = price.asString(),
+                    onValueChange = {
+                        price = it.onlyInt()
+                    },
+                    imeAction = ImeAction.Next
+                )
+            }
+            VSpacer()
+        }
+
+        item {
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { calculate.invoke(price?:0) },
+                enabled = enableButton
+            ) { Text(text = "Calculate") }
+            VSpacer()
+        }
+
+        item {
+            list.forEach {
+                when (it.type) {
+                    ARType.EQUAL.index -> {
+                        VSpacer(5.dp)
+                        EqualItem(data = it.price)
+                        VSpacer(10.dp)
                     }
-                    VSpacer()
-                }
-
-                item {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { calculate.invoke(price?:0) },
-                        enabled = enableButton
-                    ) { Text(text = "Calculate") }
-                    VSpacer()
-                }
-
-                item {
-                    list.forEach {
-                        when (it.type) {
-                            ARType.EQUAL.index -> {
-                                VSpacer(5.dp)
-                                EqualItem(data = it.price)
-                                VSpacer(10.dp)
-                            }
-                            ARType.ARA.index -> {
-                                AraItem(data = it)
-                                VSpacer(5.dp)
-                            }
-                            ARType.ARB.index -> {
-                                ArbItem(data = it)
-                                VSpacer(5.dp)
-                            }
-                        }
+                    ARType.ARA.index -> {
+                        AraItem(data = it)
+                        VSpacer(5.dp)
+                    }
+                    ARType.ARB.index -> {
+                        ArbItem(data = it)
+                        VSpacer(5.dp)
                     }
                 }
             }
         }
     }
 }
-
-private fun log(m: String) = println("AraArb $m")
 
 private val colorAra = Color.Blue.copy(alpha = 0.8f)
 private val colorArb = Color.Red.copy(alpha = 0.6f)
@@ -256,9 +253,11 @@ private fun ArbItem(data: AutoRejection) {
     }
 }
 
-@Preview(showSystemUi = true, showBackground = true, uiMode = UI_MODE_NIGHT_YES)
+@Preview(showSystemUi = true, showBackground = true, uiMode = UI_MODE_NIGHT_NO)
 @Composable
 fun AraArbScreen_Preview() {
     val list = RejectionEngineImpl().calculate(102)
-    Content(list = list, calculate = {})
+    MainContent("AraArbScreen_Preview") {
+        AutoRejection_Content(list = list, calculate = {})
+    }
 }

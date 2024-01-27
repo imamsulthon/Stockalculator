@@ -1,6 +1,7 @@
 package com.mamsky.stockalculator.android.screen.trading
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -15,10 +16,8 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
@@ -27,12 +26,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedIconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -43,10 +39,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.mamsky.stockalculator.android.R
 import com.mamsky.stockalculator.android.screen.asString
 import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
 import com.mamsky.stockalculator.android.screen.onlyInt
@@ -55,32 +55,182 @@ import com.mamsky.stockalculator.android.screen.rupiah
 import com.mamsky.stockalculator.android.shared.Container
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
+import com.mamsky.stockalculator.android.shared.MainContent
+import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
 import com.mamsky.stockalculator.android.shared.color
 
-@OptIn(ExperimentalMaterial3Api::class)
+private const val title = "Trading Return Calculator"
+
 @Composable
 fun TradingReturnScreen(
-    viewModel: TradingReturnVM = hiltViewModel()
+    viewModel: TradingReturnVM = hiltViewModel(),
+    navController: NavController = rememberNavController(),
 ) {
 
-    var showModal by remember { mutableStateOf(false) }
-    var model by remember { mutableStateOf(InputModel()) }
     val buyData by viewModel.buyData.collectAsState()
     val sellData by viewModel.sellData.collectAsState()
     val result by viewModel.result.collectAsState()
 
-    Content(
-        initInput = model,
-        onCalculate = {
-            viewModel.initCalculate(it)
-        },
-        buyResult = buyData,
-        sellResult = sellData,
-        resultCalculation = result,
-        changeFee = { showModal = true },
-        onClear = {}
-    )
+    MainContent(title, onBack = navController::popBackStack) {
+        TradingReturn_Content(
+            onCalculate = {
+                viewModel.initCalculate(it)
+            },
+            buyResult = buyData,
+            sellResult = sellData,
+            resultCalculation = result,
+            onClear = {}
+        )
+    }
+}
+
+@Composable
+fun TradingReturnPage(
+    viewModel: TradingReturnVM = hiltViewModel()
+) {
+    val buyData by viewModel.buyData.collectAsState()
+    val sellData by viewModel.sellData.collectAsState()
+    val result by viewModel.result.collectAsState()
+
+    PageContent(title) {
+        TradingReturn_Content(
+            onCalculate = {
+                viewModel.initCalculate(it)
+            },
+            buyResult = buyData,
+            sellResult = sellData,
+            resultCalculation = result,
+            onClear = {}
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TradingReturn_Content(
+    buyResult: ResultBuy = ResultBuy(),
+    sellResult: ResultSell = ResultSell(),
+    resultCalculation: ResultCalculation = ResultCalculation(),
+    onCalculate: (InputModel) -> Unit,
+    onClear: () -> Unit,
+) {
+
+    var showModal by remember { mutableStateOf(false) }
+    var model by remember { mutableStateOf(InputModel()) }
+
+    var buyPrice: Int? by remember { mutableStateOf(0) }
+    var sellPrice: Int? by remember { mutableStateOf(0) }
+    var lot: Int? by remember { mutableStateOf(0) }
+    var withBrokerFee by remember { mutableStateOf(false) }
+    val brokerFeeSell by remember(model.feeForSell) { mutableFloatStateOf(model.feeForSell) }
+    val brokerFeeBuy by remember(model.feeForBuy) { mutableFloatStateOf(model.feeForBuy) }
+    val enableButton by remember(lot) { mutableStateOf(lot != null && lot!! > 0) }
+
+    LazyColumn(
+        modifier = Modifier
+            .padding(12.dp)
+            .fillMaxSize()
+    ) {
+        item {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                InputField(
+                    modifier = Modifier.weight(1f),
+                    label = "Buy Price", value = buyPrice.asString(), onValueChange = {
+                        buyPrice = it.onlyInt()
+                    },
+                    imeAction = ImeAction.Next
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                InputField(
+                    modifier = Modifier.weight(1f),
+                    label = "Sell Price", value = sellPrice.asString(), onValueChange = {
+                        sellPrice = it.onlyInt()
+                    },
+                    imeAction = ImeAction.Next
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                InputField(
+                    modifier = Modifier.weight(1f),
+                    usePrefix = false,
+                    label = "Lot", value = lot.asString(), onValueChange = {
+                        lot = it.onlyInt()
+                    })
+            }
+        }
+
+        item {
+            Row(
+                modifier = Modifier.padding(5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Switch(
+                    modifier = Modifier.height(40.dp),
+                    checked = withBrokerFee,
+                    onCheckedChange = {
+                        withBrokerFee = it
+                    },
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(text = "Use Broker fee?")
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "Broker fee: Buy $brokerFeeBuy%, Sell $brokerFeeSell%")
+                Spacer(modifier = Modifier.width(10.dp))
+                OutlinedIconButton(
+                    modifier = Modifier.size(20.dp),
+                    onClick = { showModal = true },
+                ) {
+                    Icon(
+                        modifier = Modifier.size(12.dp),
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "ic_settings"
+                    )
+                }
+            }
+            VSpacer(10.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Button(
+                    modifier = Modifier.fillMaxWidth(0.85f),
+                    onClick = {
+                        onCalculate.invoke(
+                            InputModel(buyPrice.orZero(), sellPrice.orZero(), lot.orZero(), brokerFeeBuy, brokerFeeSell)
+                        )
+                    }, enabled = enableButton,
+                ) {
+                    Text(text = "Calculate")
+                }
+                HSpacer(10.dp)
+                OutlinedIconButton(
+                    modifier = Modifier.wrapContentSize(),
+                    onClick = onClear::invoke
+                ) {
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = "ic_delete")
+                }
+            }
+            VSpacer()
+        }
+        item {
+            CalculationResult(resultCalculation)
+            VSpacer(5.dp)
+        }
+        item {
+            SellResult(sellResult)
+            VSpacer(5.dp)
+        }
+        item {
+            BuyResult(buyResult)
+            VSpacer(5.dp)
+        }
+    }
 
     if (showModal) {
         ModalBottomSheet(
@@ -98,148 +248,7 @@ fun TradingReturnScreen(
             )
         }
     }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun Content(
-    initInput: InputModel = InputModel(),
-    buyResult: ResultBuy = ResultBuy(),
-    sellResult: ResultSell = ResultSell(),
-    resultCalculation: ResultCalculation = ResultCalculation(),
-    onCalculate: (InputModel) -> Unit,
-    onClear: () -> Unit,
-    changeFee: () -> Unit,
-) {
-    var buyPrice: Int? by remember { mutableStateOf(0) }
-    var sellPrice: Int? by remember { mutableStateOf(0) }
-    var lot: Int? by remember { mutableStateOf(0) }
-    var withBrokerFee by remember { mutableStateOf(false) }
-    val brokerFeeSell by remember(initInput.feeForSell) { mutableFloatStateOf(initInput.feeForSell) }
-    val brokerFeeBuy by remember(initInput.feeForBuy) { mutableFloatStateOf(initInput.feeForBuy) }
-    val enableButton by remember(lot) { mutableStateOf(lot != null && lot!! > 0) }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                navigationIcon = {
-                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "ic_settings")
-                },
-                title = {
-                    Text(text = "Trading Return Calculator")
-                },
-                actions = {
-                    Icon(imageVector = Icons.Default.Settings, contentDescription = "ic_settings")
-                }
-            )
-        }
-    ) { p ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(p)
-                .padding(12.dp)
-                .fillMaxSize()
-        ) {
-            item {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    InputField(
-                        modifier = Modifier.weight(1f),
-                        label = "Buy Price", value = buyPrice.asString(), onValueChange = {
-                            buyPrice = it.onlyInt()
-                        },
-                        imeAction = ImeAction.Next
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    InputField(
-                        modifier = Modifier.weight(1f),
-                        label = "Sell Price", value = sellPrice.asString(), onValueChange = {
-                            sellPrice = it.onlyInt()
-                        },
-                        imeAction = ImeAction.Next
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    InputField(
-                        modifier = Modifier.weight(1f),
-                        usePrefix = false,
-                        label = "Lot", value = lot.asString(), onValueChange = {
-                            lot = it.onlyInt()
-                        })
-                }
-            }
-
-            item {
-                Row(
-                    modifier = Modifier.padding(5.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Switch(
-                        modifier = Modifier.height(40.dp),
-                        checked = withBrokerFee,
-                        onCheckedChange = {
-                            withBrokerFee = it
-                        },
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(text = "Use Broker fee?")
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "Broker fee: Buy $brokerFeeBuy%, Sell $brokerFeeSell%")
-                    Spacer(modifier = Modifier.width(10.dp))
-                    OutlinedIconButton(
-                        modifier = Modifier.size(20.dp),
-                        onClick = { changeFee.invoke() },
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(12.dp),
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "ic_settings"
-                        )
-                    }
-                }
-                VSpacer(10.dp)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(0.85f),
-                        onClick = {
-                            onCalculate.invoke(
-                                InputModel(buyPrice.orZero(), sellPrice.orZero(), lot.orZero(), brokerFeeBuy, brokerFeeSell)
-                            )
-                        }, enabled = enableButton,
-                    ) {
-                        Text(text = "Calculate")
-                    }
-                    HSpacer(10.dp)
-                    OutlinedIconButton(
-                        modifier = Modifier.wrapContentSize(),
-                        onClick = onClear::invoke
-                    ) {
-                        Icon(imageVector = Icons.Default.Delete, contentDescription = "ic_delete")
-                    }
-                }
-                VSpacer()
-            }
-            item {
-                CalculationResult(resultCalculation)
-                VSpacer(5.dp)
-            }
-            item {
-                SellResult(sellResult)
-                VSpacer(5.dp)
-            }
-            item {
-                BuyResult(buyResult)
-                VSpacer(5.dp)
-            }
-        }
-    }
 }
 
 @Composable
@@ -410,19 +419,4 @@ internal fun CardContainer(
 @Composable
 fun TradingReturnScreen_Preview() {
     TradingReturnScreen()
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun ChangeFeeContent_Preview() {
-    ModalBottomSheet(
-        onDismissRequest = { /*TODO*/ },
-        sheetState = rememberStandardBottomSheetState()
-    ) {
-        ChangeFeeContent(
-            onApply = { b, s ->
-            }
-        )
-    }
 }

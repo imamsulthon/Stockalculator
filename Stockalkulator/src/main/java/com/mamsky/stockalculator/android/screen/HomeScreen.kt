@@ -1,6 +1,7 @@
 package com.mamsky.stockalculator.android.screen
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -22,8 +24,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.mamsky.stockalculator.android.R
+import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.VSpacer
 
 
@@ -33,12 +38,14 @@ fun HomeScreen(
     average: () -> Unit,
     araArb: () -> Unit,
     profit: () -> Unit,
+    allCalculator: () -> Unit,
 ) {
     HomeScreenContent(
         trading = trading::invoke,
         average = average::invoke,
         araArb = araArb::invoke,
-        profit = profit::invoke
+        profit = profit::invoke,
+        allCalculator = allCalculator::invoke
     )
 }
 
@@ -49,11 +56,19 @@ internal fun HomeScreenContent(
     average: () -> Unit,
     araArb: () -> Unit,
     profit: () -> Unit,
+    allCalculator: () -> Unit,
 ) {
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(title = {
-                Text(text = "Stock Calculator")
+            CenterAlignedTopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { }) {
+                            Image(painter = painterResource(id = R.drawable.calculator), contentDescription = "ic_forward")
+                        }
+                        HSpacer(5.dp)
+                        Text(text = "Stock Calculator")
+                    }
             })
         }
     ) { padding ->
@@ -62,23 +77,28 @@ internal fun HomeScreenContent(
                 .padding(padding)
                 .fillMaxSize()
         ) {
-            Column(modifier = Modifier.padding(10.dp).widthIn(max = 180.dp)) {
-                MenuItem(title = "Trading Return") {
+            Column(modifier = Modifier
+                .padding(10.dp)
+                .widthIn(max = 180.dp)) {
+                MenuItem(title = "Trading Return", iconId = R.drawable.trade) {
                     trading.invoke()
                 }
                 VSpacer(10.dp)
-                MenuItem(title = "Average Price") {
+                MenuItem(title = "Average Price", iconId = R.drawable.ic_average) {
                     average.invoke()
                 }
                 VSpacer(10.dp)
-                MenuItem(title = "ARA & ARB") {
+                MenuItem(title = "ARA & ARB", iconId = R.drawable.limited_offer) {
                     araArb.invoke()
                 }
                 VSpacer(10.dp)
-                MenuItem(title = "Profit Per Tick") {
+                MenuItem(title = "Profit Per Tick", iconId = R.drawable.investment) {
                     profit.invoke()
                 }
-
+                VSpacer(10.dp)
+                MenuItem(title = "All Calculator", iconId = R.drawable.ic_calculator) {
+                    allCalculator.invoke()
+                }
             }
         }
     }
@@ -88,6 +108,7 @@ internal fun HomeScreenContent(
 @Composable
 private fun MenuItem(
     title: String,
+    @DrawableRes iconId: Int,
     onClick: () -> Unit,
 ) {
     Card(
@@ -100,11 +121,18 @@ private fun MenuItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 15.dp),
-                text = title, style = MaterialTheme.typography.titleMedium
-            )
-            Image(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = "ic_forward")
+            Row {
+                IconButton(onClick = { }) {
+                    Image(painter = painterResource(id = iconId), contentDescription = "ic_$title")
+                }
+                Text(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 15.dp),
+                    text = title, style = MaterialTheme.typography.titleSmall
+                )
+            }
+            IconButton(onClick = { onClick.invoke() }) {
+                Image(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = "ic_forward")
+            }
         }
     }
 }
@@ -112,5 +140,5 @@ private fun MenuItem(
 @Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO)
 @Composable
 private fun HomeScreen_Preview() {
-    HomeScreen(trading = {}, araArb = {}, average = {}, profit = {})
+    HomeScreen(trading = {}, araArb = {}, average = {}, profit = {}, allCalculator = {})
 }
