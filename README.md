@@ -3,9 +3,9 @@ Stock Calculator apps for Indonesian Stock Exchange
 
 Developer: Imam Sulthon
 
-<img src="screenshoots/stockalkulator_01.jpeg" width="160">
-<img src="screenshoots/stockalkulator_02.jpeg" width="160">
-<img src="screenshoots/stockalkulator_03.jpeg" width="160">
+<img src="screenshoots/stockalkulator_01.jpeg" width="140">
+<img src="screenshoots/stockalkulator_02.jpeg" width="140">
+<img src="screenshoots/stockalkulator_03.jpeg" width="140">
 
 Libraries:
 - [Hilt](https://dagger.dev/hilt/) - Hilt provides a standard way to incorporate Dagger dependency injection into an Android application.
