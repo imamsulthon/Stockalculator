@@ -12,10 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Surface
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -41,6 +37,7 @@ import com.mamsky.stockalculator.android.R
 import com.mamsky.stockalculator.android.screen.araarb.AutoRejectionPage
 import com.mamsky.stockalculator.android.screen.average.AveragePricePage
 import com.mamsky.stockalculator.android.screen.profit.ProfitPerTickPage
+import com.mamsky.stockalculator.android.screen.tactics.AverageDownPriceContent
 import com.mamsky.stockalculator.android.screen.trading.TradingReturnPage
 
 @Composable
@@ -75,13 +72,18 @@ fun MainScreenNavGraph(
         composable(Route.AveragePrice) {
             AveragePricePage()
         }
+        composable(Route.AverageDownPrice) {
+            AverageDownPriceContent()
+        }
 
         composable(Route.AutoRejection) {
             AutoRejectionPage()
         }
 
         composable(Route.ProfitPerTick) {
-            ProfitPerTickPage()
+            val lots = it.arguments?.getString("lots")?.toIntOrNull()
+            val price = it.arguments?.getString("price")?.toIntOrNull() ?: 0
+            ProfitPerTickPage(lots = lots, price = price)
         }
     }
 }
@@ -92,6 +94,7 @@ fun BottomBar(navController: NavHostController) {
         BottomBarScreen.AutoRejection,
         BottomBarScreen.TradingReturn,
         BottomBarScreen.AveragePrice,
+        BottomBarScreen.AveragePrice2,
         BottomBarScreen.ProfitPerTick,
     )
 
@@ -149,7 +152,6 @@ fun AddItem(
         ) {
             Icon(
                 painter = painterResource(id = screen.icon),
-//                imageVector = screen.icon,
                 contentDescription = "icon",
                 tint = contentColor,
                 modifier = Modifier.size(24.dp)
@@ -171,32 +173,38 @@ sealed class BottomBarScreen(
     val description: String,
     val page: Int
 ) {
-    object TradingReturn : BottomBarScreen(
+    data object TradingReturn : BottomBarScreen(
         title = "Trading Return",
         icon = R.drawable.trade,
         description = Route.TradingReturn,
         page = 0
     )
 
-    object AveragePrice : BottomBarScreen(
+    data object AveragePrice : BottomBarScreen(
         title = "Average Price",
         icon = R.drawable.ic_average,
         description = Route.AveragePrice,
         page = 1
     )
-
-    object AutoRejection : BottomBarScreen(
-        title = "Auto Rejection",
-        icon = R.drawable.limited_offer,
-        description = Route.AutoRejection,
+    data object AveragePrice2 : BottomBarScreen(
+        title = "Average Down Price ",
+        icon = R.drawable.ic_average,
+        description = Route.AverageDownPrice,
         page = 2
     )
 
-    object ProfitPerTick : BottomBarScreen(
+    data object AutoRejection : BottomBarScreen(
+        title = "Auto Rejection",
+        icon = R.drawable.limited_offer,
+        description = Route.AutoRejection,
+        page = 3
+    )
+
+    data object ProfitPerTick : BottomBarScreen(
         title = "Profit Per Tick",
         icon = R.drawable.investment,
         description = Route.ProfitPerTick,
-        page = 3
+        page = 4
     )
 
 }

@@ -1,4 +1,4 @@
-package com.mamsky.stockalculator.android.screen.araarb
+package com.mamsky.stockalculator.data
 
 data class AutoRejection(
     val index: Int,

@@ -36,6 +36,7 @@ import com.mamsky.stockalculator.android.shared.VSpacer
 fun HomeScreen(
     trading: () -> Unit,
     average: () -> Unit,
+    averageDown: () -> Unit,
     araArb: () -> Unit,
     profit: () -> Unit,
     allCalculator: () -> Unit,
@@ -43,6 +44,7 @@ fun HomeScreen(
     HomeScreenContent(
         trading = trading::invoke,
         average = average::invoke,
+        averageDown = averageDown::invoke,
         araArb = araArb::invoke,
         profit = profit::invoke,
         allCalculator = allCalculator::invoke
@@ -54,6 +56,7 @@ fun HomeScreen(
 internal fun HomeScreenContent(
     trading: () -> Unit,
     average: () -> Unit,
+    averageDown: () -> Unit,
     araArb: () -> Unit,
     profit: () -> Unit,
     allCalculator: () -> Unit,
@@ -86,6 +89,10 @@ internal fun HomeScreenContent(
                 VSpacer(10.dp)
                 MenuItem(title = "Average Price", iconId = R.drawable.ic_average) {
                     average.invoke()
+                }
+                VSpacer(10.dp)
+                MenuItem(title = "Average Down Price", iconId = R.drawable.ic_average) {
+                    averageDown.invoke()
                 }
                 VSpacer(10.dp)
                 MenuItem(title = "ARA & ARB", iconId = R.drawable.limited_offer) {
@@ -122,7 +129,7 @@ private fun MenuItem(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row {
-                IconButton(onClick = { }) {
+                IconButton(onClick = onClick::invoke) {
                     Image(painter = painterResource(id = iconId), contentDescription = "ic_$title")
                 }
                 Text(
@@ -130,7 +137,7 @@ private fun MenuItem(
                     text = title, style = MaterialTheme.typography.titleSmall
                 )
             }
-            IconButton(onClick = { onClick.invoke() }) {
+            IconButton(onClick = onClick::invoke) {
                 Image(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = "ic_forward")
             }
         }
@@ -140,5 +147,5 @@ private fun MenuItem(
 @Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO)
 @Composable
 private fun HomeScreen_Preview() {
-    HomeScreen(trading = {}, araArb = {}, average = {}, profit = {}, allCalculator = {})
+    HomeScreen(trading = {}, araArb = {}, average = {}, profit = {}, allCalculator = {}, averageDown = {})
 }

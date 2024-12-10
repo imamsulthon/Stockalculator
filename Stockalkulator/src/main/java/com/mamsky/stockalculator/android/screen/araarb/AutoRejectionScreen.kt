@@ -29,9 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.mamsky.stockalculator.android.screen.asString
-import com.mamsky.stockalculator.android.screen.onlyInt
-import com.mamsky.stockalculator.android.screen.percentFormat
+import com.mamsky.stockalculator.data.ARType
+import com.mamsky.stockalculator.data.AutoRejection
+import com.mamsky.stockalculator.domain.RejectionEngineImpl
+import com.mamsky.stockalculator.utils.asString
+import com.mamsky.stockalculator.utils.onlyInt
+import com.mamsky.stockalculator.utils.percentFormat
 import com.mamsky.stockalculator.android.shared.Container
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField

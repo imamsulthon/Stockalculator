@@ -1,7 +1,9 @@
 package com.mamsky.stockalculator.android.screen.profit
 
 import androidx.lifecycle.ViewModel
-import com.mamsky.stockalculator.android.screen.trading.InputModel
+import com.mamsky.stockalculator.data.InputModel
+import com.mamsky.stockalculator.data.ProfitBundle
+import com.mamsky.stockalculator.domain.ProfitEngineImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

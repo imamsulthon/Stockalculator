@@ -25,10 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mamsky.stockalculator.android.screen.asString
-import com.mamsky.stockalculator.android.screen.onlyFloat
+import com.mamsky.stockalculator.utils.asString
+import com.mamsky.stockalculator.utils.onlyFloat
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.VSpacer
@@ -40,12 +41,9 @@ fun ChangeFeeContent(
     sell: Float? = 0f,
     onApply: (Float, Float) -> Unit
 ) {
-    var buyFee by remember {
-        mutableStateOf(buy)
-    }
-    var sellFee by remember {
-        mutableStateOf(sell)
-    }
+    var buyFee: String? by remember { mutableStateOf(buy.asString()) }
+    var sellFee: String? by remember { mutableStateOf(sell.asString()) }
+
     Surface(
         modifier = Modifier
             .padding(horizontal = 10.dp)
@@ -63,15 +61,18 @@ fun ChangeFeeContent(
             ) {
                 InputField(
                     modifier = Modifier.weight(1f),
-                    label = "Buy Fee", value = buyFee.asString(), onValueChange = {
-                        buyFee = it.toFloat()
-                    }
+                    label = "Buy Fee", value = buyFee.orEmpty(), onValueChange = {
+                        buyFee = it
+                    },
+                    keyboardType = KeyboardType.Decimal
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 InputField(modifier = Modifier.weight(1f),
-                    label = "Sell Fee", value = sellFee.asString(), onValueChange = {
-                        sellFee = it.onlyFloat()
-                    }
+                    label = "Sell Fee", value = sellFee.orEmpty(),
+                    onValueChange = {
+                        sellFee = it
+                    },
+                    keyboardType = KeyboardType.Decimal
                 )
             }
             VSpacer()
@@ -86,7 +87,10 @@ fun ChangeFeeContent(
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Button(onClick = {
-                    onApply.invoke(buyFee ?: 0f, sellFee ?: 0f)
+                    onApply.invoke(
+                        buyFee?.toFloatOrNull() ?: 0f,
+                        sellFee?.toFloatOrNull() ?: 0f
+                    )
                 }) {
                     Text(text = "Apply")
                 }

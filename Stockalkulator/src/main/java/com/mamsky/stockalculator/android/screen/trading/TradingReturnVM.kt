@@ -1,7 +1,11 @@
 package com.mamsky.stockalculator.android.screen.trading
 
 import androidx.lifecycle.ViewModel
-import com.mamsky.stockalculator.android.screen.araarb.sheet
+import com.mamsky.stockalculator.data.InputModel
+import com.mamsky.stockalculator.data.ResultBuy
+import com.mamsky.stockalculator.data.ResultCalculation
+import com.mamsky.stockalculator.data.ResultSell
+import com.mamsky.stockalculator.domain.sheet
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

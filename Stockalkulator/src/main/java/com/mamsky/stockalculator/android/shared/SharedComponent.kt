@@ -1,5 +1,6 @@
 package com.mamsky.stockalculator.android.shared
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -10,16 +11,24 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -31,6 +40,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,6 +69,7 @@ fun InputField(
     value: String,
     onValueChange: (String) -> Unit,
     usePrefix: Boolean = true,
+    keyboardType: KeyboardType = KeyboardType.Number,
     imeAction: ImeAction = ImeAction.Done,
     textStyle: TextStyle = MaterialTheme.typography.labelSmall,
 ) {
@@ -73,7 +84,58 @@ fun InputField(
         },
         value = value, onValueChange = onValueChange::invoke,
         keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Number,
+            keyboardType = keyboardType,
+            imeAction = imeAction
+        ),
+    )
+}
+
+@Composable
+fun InputField2(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    up: (() -> Unit)? = null,
+    down: (() -> Unit)? = null,
+    usePrefix: Boolean = true,
+    useUpDown: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Number,
+    imeAction: ImeAction = ImeAction.Done,
+    textStyle: TextStyle = MaterialTheme.typography.labelSmall,
+    iconSize: Dp = 16.dp
+) {
+    OutlinedTextField(
+        modifier = modifier,
+        textStyle = textStyle,
+        label = {
+            Text(text = label, fontSize = 9.sp)
+        },
+        prefix = {
+            if (usePrefix) Text(text = "Rp ", style = MaterialTheme.typography.labelSmall)
+        },
+        trailingIcon = {
+            if (useUpDown) {
+                Column {
+                    IconButton(
+                        modifier = Modifier.size(iconSize),
+                        onClick = { up?.invoke() }
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = null)
+                    }
+                    IconButton(
+                        modifier = Modifier.size(iconSize),
+                        onClick = { down?.invoke() }
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+                    }
+                }
+            }
+        },
+        value = value,
+        onValueChange = onValueChange::invoke,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
             imeAction = imeAction
         ),
     )
@@ -133,5 +195,72 @@ fun ButtonIcon(
         Icon(
             modifier = Modifier.size(18.dp),
             imageVector = icon, contentDescription = "outlined_button")
+    }
+}
+
+@Composable
+fun LazyItemScope.UseBrokerFee(
+    brokerFeeBuy: Float,
+    brokerFeeSell: Float,
+    withBrokerFee: Boolean = false,
+    onCheckChanged: (Boolean) -> Unit,
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End
+    ) {
+        Switch(
+            modifier = Modifier.height(8.dp),
+            checked = withBrokerFee,
+            onCheckedChange = onCheckChanged::invoke,
+        )
+        HSpacer(5.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Broker fee? Buy $brokerFeeBuy%, Sell $brokerFeeSell%")
+            HSpacer(5.dp)
+            OutlinedIconButton(
+                modifier = Modifier.size(20.dp),
+                onClick = onClick::invoke,
+            ) {
+                Icon(
+                    modifier = Modifier.size(12.dp),
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "ic_settings"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ButtonAndClear(
+    title: String,
+    onClick: () -> Unit,
+    onClickIcon: () -> Unit,
+    enableButton: Boolean = true,
+    enableIcon: Boolean = true,
+    icon: ImageVector = Icons.Outlined.Delete
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Button(
+            modifier = Modifier.fillMaxWidth(0.85f),
+            onClick = onClick::invoke, enabled = enableButton
+        ) {
+            Text(text = title)
+        }
+        HSpacer(10.dp)
+        OutlinedIconButton(
+            modifier = Modifier.wrapContentSize(),
+            onClick = onClickIcon::invoke,
+            enabled = enableIcon
+        ) {
+            Icon(imageVector = icon, contentDescription = null)
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.mamsky.stockalculator.android.screen.average
+package com.mamsky.stockalculator.data
 
 data class BuyItemModel(
     val id: Long,

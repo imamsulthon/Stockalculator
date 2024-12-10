@@ -10,21 +10,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -41,10 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.mamsky.stockalculator.android.screen.asString
-import com.mamsky.stockalculator.android.screen.onlyInt
-import com.mamsky.stockalculator.android.screen.rupiah
-import com.mamsky.stockalculator.android.screen.trading.InputModel
+import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.ButtonIcon
 import com.mamsky.stockalculator.android.shared.Container
 import com.mamsky.stockalculator.android.shared.HSpacer
@@ -52,9 +44,16 @@ import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
+import com.mamsky.stockalculator.data.AverageItem
+import com.mamsky.stockalculator.data.BuyItemModel
+import com.mamsky.stockalculator.data.InputModel
+import com.mamsky.stockalculator.utils.currency
+import com.mamsky.stockalculator.utils.intOrNull
+import com.mamsky.stockalculator.utils.isZeroOrNull
+import com.mamsky.stockalculator.utils.rupiah
 
 @Composable
-fun AveragePrice(
+fun AveragePriceScreen(
     viewModel: AveragePriceVM = hiltViewModel(),
     navController: NavController = rememberNavController(),
 ) {
@@ -98,10 +97,10 @@ fun AveragePrice_Content(
     onClear: () -> Unit,
     onRemove: (BuyItemModel) -> Unit,
 ) {
-    var buyPrice: Int? by remember { mutableStateOf(0) }
-    var lot: Int? by remember { mutableStateOf(0) }
+    var buyPrice: String? by remember { mutableStateOf("") }
+    var lot: String? by remember { mutableStateOf("") }
     val enabledBuy by remember(buyPrice, lot) {
-        mutableStateOf(buyPrice!! > 0 && lot!! > 0)
+        mutableStateOf(!buyPrice.intOrNull().isZeroOrNull() && !lot.intOrNull().isZeroOrNull())
     }
     LazyColumn(
         modifier = Modifier
@@ -115,8 +114,8 @@ fun AveragePrice_Content(
             ) {
                 InputField(
                     modifier = Modifier.weight(1f),
-                    label = "Price", value = buyPrice.asString(), onValueChange = {
-                        buyPrice = it.onlyInt()
+                    label = "Price", value = buyPrice.orEmpty(), onValueChange = {
+                        buyPrice = it
                     },
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
@@ -126,8 +125,8 @@ fun AveragePrice_Content(
                     usePrefix = false,
                     modifier = Modifier.weight(1f),
                     textStyle = MaterialTheme.typography.bodyMedium,
-                    label = "Lot", value = lot.asString(), onValueChange = {
-                        lot = it.onlyInt()
+                    label = "Lot", value = lot.orEmpty(), onValueChange = {
+                        lot = it
                     },
                     imeAction = ImeAction.Done
                 )
@@ -139,40 +138,27 @@ fun AveragePrice_Content(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Value: Rp ${averageItem.average.rupiah()}")
+                Text(text = "Value: ${averageItem.average.rupiah()}")
                 Spacer(modifier = Modifier.width(10.dp))
             }
             VSpacer(10.dp)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Button(
-                    modifier = Modifier.fillMaxWidth(0.85f),
-                    onClick = {
-                        onCalculate.invoke(
-                            InputModel().apply {
-                                this.buy = buyPrice ?: 0
-                                this.lot = lot ?: 0
-                            }
-                        )
-                    }, enabled = enabledBuy
-                ) {
-                    Text(text = "Buy")
-                }
-                HSpacer(10.dp)
-                OutlinedIconButton(
-                    modifier = Modifier.wrapContentSize(),
-                    onClick = {
-                        buyPrice = 0
-                        lot = 0
-                        onClear.invoke()
-                    }
-                ) {
-                    Icon(imageVector = Icons.Outlined.Delete, contentDescription = "ic_delete")
-                }
-            }
-
+            ButtonAndClear(
+                title = "Buy",
+                enableButton = enabledBuy,
+                onClick = {
+                    onCalculate.invoke(
+                        InputModel().apply {
+                            this.buy = buyPrice.intOrNull() ?: 0
+                            this.lot = lot.intOrNull() ?: 0
+                        }
+                    )
+                },
+                onClickIcon = {
+                    buyPrice = ""
+                    lot = ""
+                    onClear.invoke()
+                },
+            )
             VSpacer()
         }
 
@@ -195,7 +181,7 @@ fun AveragePrice_Content(
                 ) {
                     Container {
                         Text(text = "Buy", style = MaterialTheme.typography.labelMedium)
-                        Text(text = "Rp ${averageItem.average.rupiah()}", style = MaterialTheme.typography.bodySmall)
+                        Text(text = averageItem.average.rupiah(), style = MaterialTheme.typography.bodySmall)
                     }
                     HSpacer(4.dp)
                     Container {
@@ -205,7 +191,7 @@ fun AveragePrice_Content(
                     HSpacer(4.dp)
                     Container {
                         Text(text = "Total", style = MaterialTheme.typography.labelMedium)
-                        Text(text = "Rp ${averageItem.value.rupiah()}", style = MaterialTheme.typography.bodySmall)
+                        Text(text = averageItem.value.rupiah(), style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -227,15 +213,15 @@ fun AveragePrice_Content(
             }
         }
 
-        items(list) {
-            BuyItem(it, onRemove = { onRemove.invoke(it) })
+        itemsIndexed(list) { index, item ->
+            BuyItem(item, index + 1, onRemove = { onRemove.invoke(item) })
             VSpacer(10.dp)
         }
     }
 }
 
 @Composable
-private fun BuyItem(data: BuyItemModel, onRemove: () -> Unit) {
+private fun BuyItem(data: BuyItemModel, index: Int = 0, onRemove: () -> Unit) {
     Card(
         shape = RoundedCornerShape(5.dp),
         border = BorderStroke(
@@ -243,14 +229,20 @@ private fun BuyItem(data: BuyItemModel, onRemove: () -> Unit) {
             color = Color.Blue,
         ),
     ) {
-        IconButton(
-            modifier = Modifier
-                .padding(5.dp)
-                .size(20.dp)
-                .align(Alignment.End),
-            onClick = { onRemove.invoke() }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Image(imageVector = Icons.Default.Close, contentDescription = "ic_delete")
+            Text(
+                modifier = Modifier.padding(5.dp),
+                text = "Transaction $index", style = MaterialTheme.typography.titleSmall
+            )
+            IconButton(
+                modifier = Modifier.padding(5.dp).size(24.dp),
+                onClick = { onRemove.invoke() }
+            ) {
+                Image(imageVector = Icons.Default.Close, contentDescription = "ic_delete")
+            }
         }
         Divider(modifier = Modifier.padding(vertical = 2.dp), thickness = 1.dp, color = Color.Blue)
         Row(modifier = Modifier
@@ -260,7 +252,7 @@ private fun BuyItem(data: BuyItemModel, onRemove: () -> Unit) {
         ) {
             Container {
                 Text(text = "Buy", style = MaterialTheme.typography.labelMedium)
-                Text(text = "Rp ${data.price.rupiah()}", style = MaterialTheme.typography.bodySmall)
+                Text(text = data.price.rupiah().currency(), style = MaterialTheme.typography.bodySmall)
             }
             HSpacer(4.dp)
             Container {
@@ -270,7 +262,7 @@ private fun BuyItem(data: BuyItemModel, onRemove: () -> Unit) {
             HSpacer(4.dp)
             Container {
                 Text(text = "Total", style = MaterialTheme.typography.labelMedium)
-                Text(text = "Rp ${data.total.rupiah()}", style = MaterialTheme.typography.bodySmall)
+                Text(text = data.total.rupiah().currency(), style = MaterialTheme.typography.bodySmall)
             }
         }
     }

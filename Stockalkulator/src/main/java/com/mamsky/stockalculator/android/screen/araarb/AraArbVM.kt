@@ -2,6 +2,8 @@ package com.mamsky.stockalculator.android.screen.araarb
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
+import com.mamsky.stockalculator.data.AutoRejection
+import com.mamsky.stockalculator.domain.RejectionEngineImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

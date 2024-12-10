@@ -1,6 +1,7 @@
-package com.mamsky.stockalculator.android.screen.araarb
+package com.mamsky.stockalculator.domain
 
-import com.mamsky.stockalculator.android.screen.percentOf
+import com.mamsky.stockalculator.data.AutoRejection
+import com.mamsky.stockalculator.utils.percentOf
 
 interface RejectionEngine {
 
@@ -29,7 +30,6 @@ class RejectionEngineImpl: RejectionEngine {
             val discPrice = (currentPrice * fraction).toInt()
             var price = currentPrice + discPrice
             val evaluation = price % price.fraction()
-            log("getAra evaluation $evaluation")
             price -= evaluation
             val diff = price - init
             this.add(

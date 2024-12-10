@@ -1,7 +1,6 @@
 package com.mamsky.stockalculator.android.screen.trading
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -39,19 +38,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.mamsky.stockalculator.android.R
-import com.mamsky.stockalculator.android.screen.asString
 import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
-import com.mamsky.stockalculator.android.screen.onlyInt
-import com.mamsky.stockalculator.android.screen.orZero
-import com.mamsky.stockalculator.android.screen.rupiah
 import com.mamsky.stockalculator.android.shared.Container
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
@@ -59,6 +52,15 @@ import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
 import com.mamsky.stockalculator.android.shared.color
+import com.mamsky.stockalculator.data.InputModel
+import com.mamsky.stockalculator.data.ResultBuy
+import com.mamsky.stockalculator.data.ResultCalculation
+import com.mamsky.stockalculator.data.ResultSell
+import com.mamsky.stockalculator.utils.asString
+import com.mamsky.stockalculator.utils.onlyInt
+import com.mamsky.stockalculator.utils.orZero
+import com.mamsky.stockalculator.utils.percentFormat
+import com.mamsky.stockalculator.utils.rupiah
 
 private const val title = "Trading Return Calculator"
 
@@ -259,21 +261,22 @@ fun CalculationResult(
         first = {
             Container {
                 Text(text = "Status", style = MaterialTheme.typography.bodyMedium)
-                Text(text = data.status, style = MaterialTheme.typography.bodySmall)
+                Text(text = data.status, style = MaterialTheme.typography.bodySmall, color = data.profit.color())
             }
             Container(Alignment.End) {
                 Text(text = "Profit", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Rp ${data.profit.rupiah()}", style = MaterialTheme.typography.bodySmall, color = data.profit.color())
+                Text(text = data.profit.rupiah(), style = MaterialTheme.typography.bodySmall, color = data.profit.color())
             }
         },
         second = {
             Container {
                 Text(text = "Total Fee", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Rp ${data.totalFee.rupiah()}", style = MaterialTheme.typography.bodySmall, color = data.totalFee.color())
+                Text(text = "${data.totalFee}",
+                    style = MaterialTheme.typography.bodySmall, color = data.totalFee.color())
             }
             Container(Alignment.End) {
                 Text(text = "Net Profit", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Rp ${data.netProfit.rupiah()}", style = MaterialTheme.typography.bodySmall, color = data.netProfit.color())
+                Text(text = data.netProfit.rupiah(), style = MaterialTheme.typography.bodySmall, color = data.netProfit.color())
             }
         }
     )
@@ -288,14 +291,14 @@ private fun SellResult(
             Container {
                 Text(text = "Sell Price", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "Rp ${data.sellPrice.rupiah()} x ${data.lot} lot",
+                    text = "${data.sellPrice.rupiah()} x ${data.lot} lot",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
             Container(Alignment.End) {
                 Text(text = "Sell Value", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "Rp ${data.sellValue.rupiah()}",
+                    text = data.sellValue.rupiah(),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -303,11 +306,11 @@ private fun SellResult(
         second = {
             Container {
                 Text(
-                    text = "Sell Fee (0%)",
+                    text = "Sell Fee (${data.fee.percentFormat()}%)",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Rp ${data.fee.rupiah()}",
+                    text = (data.sellPrice * data.fee).rupiah(),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -317,7 +320,7 @@ private fun SellResult(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Rp ${data.totalReceived.rupiah()}",
+                    text = data.totalReceived.rupiah(),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -341,7 +344,7 @@ private fun BuyResult(
             Container(alignment = Alignment.End) {
                 Text(text = "Buy Value", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "Rp ${data.buyValue.rupiah()}",
+                    text = data.buyValue.rupiah(),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -349,18 +352,18 @@ private fun BuyResult(
         second = {
             Container {
                 Text(
-                    text = "Buy Fee (${data.fee}%)",
+                    text = "Buy Fee (${data.fee.percentFormat()}%)",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Rp ${(data.price * data.fee).rupiah()}",
+                    text = (data.price * data.fee).rupiah(),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
             Container(Alignment.End) {
                 Text(text = "Total Paid", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "Rp ${data.totalPaid.rupiah()}",
+                    text = data.totalPaid.rupiah(),
                     style = MaterialTheme.typography.bodySmall
                 )
             }

@@ -1,4 +1,4 @@
-package com.mamsky.stockalculator.android.screen.profit
+package com.mamsky.stockalculator.data
 
 
 data class ProfitBundle(

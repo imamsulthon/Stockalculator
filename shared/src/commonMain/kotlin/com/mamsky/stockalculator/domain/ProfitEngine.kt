@@ -1,8 +1,10 @@
-package com.mamsky.stockalculator.android.screen.profit
+package com.mamsky.stockalculator.domain
 
-import com.mamsky.stockalculator.android.screen.araarb.fraction
-import com.mamsky.stockalculator.android.screen.netPrice
-import com.mamsky.stockalculator.android.screen.percentOf
+import com.mamsky.stockalculator.data.ProfitBundle
+import com.mamsky.stockalculator.data.ProfitInRow
+import com.mamsky.stockalculator.data.ProfitPerTick
+import com.mamsky.stockalculator.utils.netPrice
+import com.mamsky.stockalculator.utils.percentOf
 
 interface ProfitEngine {
 

@@ -8,24 +8,14 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedIconButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -47,21 +37,37 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.mamsky.stockalculator.android.screen.asString
+import com.mamsky.stockalculator.android.screen.Route
 import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
-import com.mamsky.stockalculator.android.screen.notZeroNull
-import com.mamsky.stockalculator.android.screen.onlyInt
-import com.mamsky.stockalculator.android.screen.percentFormat
-import com.mamsky.stockalculator.android.screen.rupiah
-import com.mamsky.stockalculator.android.screen.trading.InputModel
+import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
+import com.mamsky.stockalculator.android.shared.InputField2
 import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
+import com.mamsky.stockalculator.android.shared.UseBrokerFee
 import com.mamsky.stockalculator.android.shared.VSpacer
 import com.mamsky.stockalculator.android.shared.color
+import com.mamsky.stockalculator.data.InputModel
+import com.mamsky.stockalculator.data.ProfitBundle
+import com.mamsky.stockalculator.data.ProfitInRow
+import com.mamsky.stockalculator.domain.ProfitEngineImpl
+import com.mamsky.stockalculator.utils.asString
+import com.mamsky.stockalculator.utils.notZeroNull
+import com.mamsky.stockalculator.utils.onlyInt
+import com.mamsky.stockalculator.utils.percentFormat
+import com.mamsky.stockalculator.utils.rupiah
 
 private const val PAGE_TITLE = "Profit Per Tick"
+
+object ProfitPerTick {
+
+    const val PATH = Route.ProfitPerTick
+
+    fun route(lots: Int, price: Int) = PATH
+        .replace("{lots}", "$lots")
+        .replace("{price}", "$price")
+}
 
 @Composable
 fun ProfitPerTickScreen(
@@ -82,12 +88,16 @@ fun ProfitPerTickScreen(
 
 @Composable
 fun ProfitPerTickPage(
-    viewModel: ProfitPerTickVM = hiltViewModel()
+    viewModel: ProfitPerTickVM = hiltViewModel(),
+    lots: Int?,
+    price: Int?,
 ) {
     val list by viewModel.allItems.collectAsState()
     PageContent(PAGE_TITLE) {
         ProfitPerTick_Content(
             list,
+            lots = lots,
+            buy = price,
             onCalculate = { viewModel.calculate(it.buy, it.lot, it) },
             onClear = { viewModel.clear() },
         )
@@ -98,6 +108,8 @@ fun ProfitPerTickPage(
 @Composable
 private fun ProfitPerTick_Content(
     bundle: ProfitBundle = ProfitBundle(0),
+    buy: Int? = null,
+    lots: Int? = null,
     onCalculate: (InputModel) -> Unit,
     onClear: () -> Unit,
 ) {
@@ -105,8 +117,8 @@ private fun ProfitPerTick_Content(
     var showModal by remember { mutableStateOf(false) }
     var model by remember { mutableStateOf(InputModel()) }
 
-    var buyPrice: Int? by remember { mutableStateOf(0) }
-    var lot: Int? by remember { mutableStateOf(0) }
+    var buyPrice: Int? by remember { mutableStateOf(buy) }
+    var lot: Int? by remember { mutableStateOf(lots) }
     val enabledBuy by remember(buyPrice, lot) {
         mutableStateOf( buyPrice.notZeroNull() && lot.notZeroNull())
     }
@@ -133,9 +145,10 @@ private fun ProfitPerTick_Content(
                     imeAction = ImeAction.Next
                 )
                 Spacer(modifier = Modifier.width(10.dp))
-                InputField(
+                InputField2(
                     usePrefix = false,
                     modifier = Modifier.weight(1f),
+                    useUpDown = true,
                     textStyle = MaterialTheme.typography.bodyMedium,
                     label = "Lot", value = lot.asString(), onValueChange = {
                         lot = it.onlyInt()
@@ -147,66 +160,31 @@ private fun ProfitPerTick_Content(
 
         item {
             VSpacer(10.dp)
-            Row(
-                modifier = Modifier.padding(5.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Switch(
-                    modifier = Modifier.height(40.dp),
-                    checked = withBrokerFee,
-                    onCheckedChange = {
-                        withBrokerFee = it
-                    },
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(text = "Use Broker fee?")
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "Broker fee: Buy $brokerFeeBuy%, Sell $brokerFeeSell%")
-                Spacer(modifier = Modifier.width(10.dp))
-                OutlinedIconButton(
-                    modifier = Modifier.size(20.dp),
-                    onClick = { showModal = true },
-                ) {
-                    Icon(
-                        modifier = Modifier.size(12.dp),
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "ic_settings"
-                    )
-                }
-            }
+            UseBrokerFee(
+                brokerFeeBuy,
+                brokerFeeSell,
+                withBrokerFee = withBrokerFee,
+                onCheckChanged = { withBrokerFee = it },
+                onClick = { showModal = true }
+            )
             VSpacer(10.dp)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Button(
-                    modifier = Modifier.fillMaxWidth(0.85f),
-                    onClick = {
-                        onCalculate.invoke(
-                            InputModel().apply {
-                                this.buy = buyPrice ?: 0
-                                this.lot = lot ?: 0
-                            }
-                        )
-                    }, enabled = enabledBuy
-                ) {
-                    Text(text = "Calculate")
-                }
-                HSpacer(10.dp)
-                OutlinedIconButton(
-                    modifier = Modifier.wrapContentSize(),
-                    onClick = {
-                        buyPrice = 0
-                        lot = 0
-                        onClear.invoke()
-                    }
-                ) {
-                    Icon(imageVector = Icons.Outlined.Delete, contentDescription = "ic_delete")
-                }
-            }
+            ButtonAndClear(
+                title = "Calculate",
+                enableButton = enabledBuy,
+                onClick = {
+                    onCalculate.invoke(
+                        InputModel().apply {
+                            this.buy = buyPrice ?: 0
+                            this.lot = lot ?: 0
+                        }
+                    )
+                },
+                onClickIcon = {
+                    buyPrice = 0
+                    lot = 0
+                    onClear.invoke()
+                },
+            )
             VSpacer(10.dp)
         }
 
@@ -219,7 +197,7 @@ private fun ProfitPerTick_Content(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = "Result",  style = MaterialTheme.typography.titleMedium)
-                Text(text = "Initial Investment: Rp ${bundle.initialValue.rupiah(true, false)}",
+                Text(text = "Initial Investment: ${bundle.initialValue.rupiah(true)}",
                     style = MaterialTheme.typography.labelSmall)
             }
         }
@@ -279,11 +257,11 @@ fun ItemRes(
     ) {
         TableCellItem(text = data.left.price.toString(), weight = cw1)
         TableCellItem(text = data.left.lossGain.percentFormat(), weight = cw2, color = data.left.lossGain.color())
-        TableCellItem(text = data.left.value.toString(), weight = cw3, color = data.left.value.color())
+        TableCellItem(text = data.left.value.rupiah(false, false), weight = cw3, color = data.left.value.color())
         HSpacer(10.dp)
         TableCellItem(text = data.right?.price.toString(), weight = cw1)
         TableCellItem(text = data.right?.lossGain?.percentFormat().orEmpty(), weight = cw2, color = data.right?.lossGain.color())
-        TableCellItem(text = data.right?.value.toString(), weight = cw3, color = data.right?.value.color())
+        TableCellItem(text = data.right?.value.rupiah(false, false), weight = cw3, color = data.right?.value.color())
     }
 }
 
@@ -330,3 +308,5 @@ fun ProfitPerTick_Preview() {
         ProfitPerTick_Content(bundle, onCalculate = {}, onClear = {},)
     }
 }
+
+

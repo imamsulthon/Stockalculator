@@ -1,4 +1,4 @@
-package com.mamsky.stockalculator.android.screen.trading
+package com.mamsky.stockalculator.data
 
 
 data class InputModel(

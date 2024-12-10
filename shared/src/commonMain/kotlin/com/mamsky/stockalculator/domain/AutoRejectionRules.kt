@@ -1,4 +1,4 @@
-package com.mamsky.stockalculator.android.screen.araarb
+package com.mamsky.stockalculator.domain
 
 fun Int.fractionAra(): Float {
     return when {

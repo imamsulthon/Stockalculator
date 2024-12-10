@@ -6,8 +6,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.araarb.AraArbScreen
-import com.mamsky.stockalculator.android.screen.average.AveragePrice
+import com.mamsky.stockalculator.android.screen.average.AveragePriceScreen
 import com.mamsky.stockalculator.android.screen.profit.ProfitPerTickScreen
+import com.mamsky.stockalculator.android.screen.tactics.AverageDownPriceScreen
 import com.mamsky.stockalculator.android.screen.trading.TradingReturnScreen
 
 
@@ -24,6 +25,9 @@ fun AppNavigation(
                 },
                 average = {
                     navController.navigate(Route.AveragePrice)
+                },
+                averageDown = {
+                    navController.navigate(Route.AverageDownPrice)
                 },
                 araArb = {
                     navController.navigate(Route.AutoRejection)
@@ -42,7 +46,11 @@ fun AppNavigation(
         }
 
         composable(Route.AveragePrice) {
-            AveragePrice(navController = navController)
+            AveragePriceScreen(navController = navController)
+        }
+
+        composable(Route.AverageDownPrice) {
+            AverageDownPriceScreen(navController = navController)
         }
 
         composable(Route.AutoRejection) {
@@ -63,7 +71,8 @@ object Route {
     const val Home = "home"
     const val TradingReturn = "trading-return"
     const val AveragePrice = "average-price"
+    const val AverageDownPrice = "average-price2"
     const val AutoRejection = "auto-rejection"
-    const val ProfitPerTick = "profit-per-tick"
+    const val ProfitPerTick = "profit-per-tick/{lots}/{price}"
     const val AllCalculator = "all-calculator"
 }
