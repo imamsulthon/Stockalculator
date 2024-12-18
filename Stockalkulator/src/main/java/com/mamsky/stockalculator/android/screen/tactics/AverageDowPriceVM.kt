@@ -2,6 +2,7 @@ package com.mamsky.stockalculator.android.screen.tactics
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
+import com.mamsky.stockalculator.android.screen.tactics.LotSequence.reverted
 import com.mamsky.stockalculator.data.AverageItem
 import com.mamsky.stockalculator.data.BuyItemModel
 import com.mamsky.stockalculator.domain.sheet
@@ -30,21 +31,203 @@ class AverageDowPriceVM @Inject constructor(
     private val _averageResult = MutableStateFlow<AverageItem?>(null)
     val averageResult: StateFlow<AverageItem?> = _averageResult.asStateFlow()
 
-    fun calculate(
-        init: AverageItem, minPrice: Int, maxPrice: Int, foldPrice: Int = 1,
-        minLot: Int = 1, maxLot: Int = 10, lotIncrement: Int = 1, fee: Float = .0f
+
+    fun exercise(
+        init: AverageItem, startPrice: Int, endPrice: Int, foldPrice: Int = 1,
+        minLot: Int = 1, maxLot: Int = 10, lotIncrement: Int = 1, fee: Float = .0f,
+        revertLot: Boolean = false, uptrend: Boolean = false
     ) {
         clear()
-        initAverage(init)
-        var price = maxPrice
-        for (lot in minLot..maxLot step lotIncrement) {
+        initAverage(init, fee)
+        when {
+            uptrend && !revertLot -> {
+                var price = startPrice
+                LotSequence.antiGeneral(maxLot, minLot, lotIncrement) { lot ->
+                    println("LotSequence1 $lot")
+                    val pricePerSheet = price.priceBuy(lot, fee).toInt()
+                    val item = BuyItemModel(id = lot.toLong(), price = price, lot = lot).apply {
+                        total = pricePerSheet
+                    }
+                    _items.add(item)
+                    price += foldPrice
+                    false
+                }
+            }
+            uptrend && revertLot -> {
+                println("LotSequence2 $lotIncrement")
+                var price = startPrice
+                LotSequence.general(minLot, maxLot, lotIncrement) { lot ->
+                    val pricePerSheet = price.priceBuy(lot, fee).toInt()
+                    val item = BuyItemModel(id = lot.toLong(), price = price, lot = lot).apply {
+                        total = pricePerSheet
+                    }
+                    _items.add(item)
+                    price += foldPrice
+                    false
+                }
+            }
+            !uptrend && revertLot -> {
+                println("LotSequence3")
+                revertLot(startPrice, endPrice, foldPrice, minLot, maxLot, lotIncrement, fee)
+            }
+            else -> {
+                println("LotSequence4 $lotIncrement")
+                var price = startPrice
+                LotSequence.general(minLot, maxLot, lotIncrement) { lot ->
+                    val pricePerSheet = price.priceBuy(lot, fee).toInt()
+                    val item = BuyItemModel(id = lot.toLong(), price = price, lot = lot).apply {
+                        total = pricePerSheet
+                    }
+                    _items.add(item)
+                    price -= foldPrice
+                    false
+                }
+            }
+        }
+        calculate()
+    }
+
+    private fun revertLot(
+        topPrice: Int, bottomPrice: Int, foldPrice: Int = 1,
+        minLot: Int = 1, maxLot: Int = 10, lotIncrement: Int = 1, fee: Float = .0f,
+    ) {
+        var price = topPrice
+        LotSequence.antiGeneral(maxLot, minLot, lotIncrement) { lot ->
+            println("LotSequence2 $lot")
             val pricePerSheet = price.priceBuy(lot, fee).toInt()
             val item = BuyItemModel(id = lot.toLong(), price = price, lot = lot).apply {
                 total = pricePerSheet
             }
             _items.add(item)
             price -= foldPrice
-            if (price == minPrice || price == 0) break
+//            price < bottomPrice || price == 0
+            false
+        }
+        calculate()
+    }
+
+    fun fibonacci(
+        init: AverageItem, startPrice: Int, endPrice: Int, foldPrice: Int = 1,
+        lotIncrement: Int = 1, fee: Float = .0f,
+        revertLot: Boolean = false, uptrend: Boolean = false
+    ) {
+        clear()
+        initAverage(init, fee)
+
+        when {
+            uptrend && revertLot -> {
+                var price = startPrice
+                LotSequence.fibonacci(lotIncrement) { false }.reverted {
+                    val pricePerSheet = price.priceBuy(it, fee).toInt()
+                    val item = BuyItemModel(id = it.toLong(), price = price, lot = it).apply {
+                        total = pricePerSheet
+                    }
+                    _items.add(item)
+                    price += foldPrice
+//                    price >= endPrice
+                    false
+                }
+            }
+            uptrend && !revertLot -> {
+                var price = startPrice
+                LotSequence.fibonacci(lotIncrement) {
+                    val pricePerSheet = price.priceBuy(it, fee).toInt()
+                    val item = BuyItemModel(id = it.toLong(), price = price, lot = it).apply {
+                        total = pricePerSheet
+                    }
+                    _items.add(item)
+                    price += foldPrice
+//                    price >= endPrice
+                    false
+                }
+            }
+            revertLot -> {
+                var price = startPrice
+                LotSequence.fibonacci(lotIncrement) { false }.reverted {
+                    val pricePerSheet = price.priceBuy(it, fee).toInt()
+                    val item = BuyItemModel(id = it.toLong(), price = price, lot = it).apply {
+                        total = pricePerSheet
+                    }
+                    _items.add(item)
+                    price -= foldPrice
+//                    price >= endPrice
+                    false
+                }
+            }
+            else -> {
+                var price = startPrice
+                LotSequence.fibonacci(lotIncrement) {
+                    val pricePerSheet = price.priceBuy(it, fee).toInt()
+                    val item = BuyItemModel(id = it.toLong(), price = price, lot = it).apply {
+                        total = pricePerSheet
+                    }
+                    price -= foldPrice
+                    _items.add(item)
+//                    price >= endPrice
+                    false
+                }
+            }
+        }
+
+        calculate()
+    }
+
+    fun martingale(
+        init: AverageItem, startPrice: Int, endPrice: Int, foldPrice: Int = 1, startLot: Int,
+        recursion: Int = 1, fee: Float = .0f,
+        revertLot: Boolean = false, uptrend: Boolean = false
+    ) {
+        clear()
+        initAverage(init, fee)
+        when {
+            uptrend && !revertLot -> {
+                var price = startPrice
+                LotSequence.martingale(startLot, recursion) { lot ->
+                    val pricePerSheet = startPrice.priceBuy(lot, fee).toInt()
+                    val item = BuyItemModel(id = lot.toLong(), price = price, lot = lot).apply {
+                        total = pricePerSheet
+                    }
+                    price += foldPrice
+                    _items.add(item)
+                    price >= endPrice
+                }
+            }
+            uptrend && revertLot -> {
+                var price = startPrice
+                LotSequence.martingale(startLot, recursion) { _ -> false }.reverted { lot ->
+                    val pricePerSheet = startPrice.priceBuy(lot, fee).toInt()
+                    val item = BuyItemModel(id = lot.toLong(), price = price, lot = lot).apply {
+                        total = pricePerSheet
+                    }
+                    _items.add(item)
+                    price += foldPrice
+                    price >= endPrice
+                }
+            }
+            revertLot -> {
+                var price = startPrice
+                LotSequence.martingale(startLot, recursion) { _ -> false }.reverted { lot ->
+                    val pricePerSheet = startPrice.priceBuy(lot, fee).toInt()
+                    val item = BuyItemModel(id = lot.toLong(), price = price, lot = lot).apply {
+                        total = pricePerSheet
+                    }
+                    _items.add(item)
+                    price -= foldPrice
+                    price <= endPrice
+                }
+            }
+            else -> {
+                var price = startPrice
+                LotSequence.martingale(startLot, recursion) { lot ->
+                    val pricePerSheet = startPrice.priceBuy(lot, fee).toInt()
+                    val item = BuyItemModel(id = lot.toLong(), price = price, lot = lot).apply {
+                        total = pricePerSheet
+                    }
+                    price -= foldPrice
+                    _items.add(item)
+                    price <= endPrice
+                }
+            }
         }
         calculate()
     }
@@ -56,8 +239,11 @@ class AverageDowPriceVM @Inject constructor(
         _averageResult.value = null
     }
 
-    private fun initAverage(init: AverageItem) {
-        _initAverage.update { init }
+    private fun initAverage(init: AverageItem, fee: Float) {
+        val price = init.average.priceBuy(init.lot, fee)
+        _initAverage.update {
+            init.copy(value = price)
+        }
     }
 
     private fun calculate() {
@@ -69,8 +255,6 @@ class AverageDowPriceVM @Inject constructor(
         _buyingAverage.update {
             AverageItem(lots, av, value)
         }
-
-        // todo
 
         _initAverage.value?.let {
             val totalValue = it.value + value

@@ -15,7 +15,8 @@ data class ResultCalculation(
     val status: String,
     val profit: Float,
     val totalFee: Float,
-    val netProfit: Float
+    val netProfit: Float,
+    val percentPL: Float = .00f
 ) {
     constructor(): this("", 0f, 0f, 0f)
 }

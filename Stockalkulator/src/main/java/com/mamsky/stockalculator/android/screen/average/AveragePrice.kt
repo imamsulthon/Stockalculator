@@ -1,8 +1,10 @@
 package com.mamsky.stockalculator.android.screen.average
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -20,10 +24,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,6 +43,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.mamsky.stockalculator.android.screen.tactics.AverageDownPriceTabContent
+import com.mamsky.stockalculator.android.screen.tactics.FibonacciScreen
+import com.mamsky.stockalculator.android.screen.tactics.FibonacciTabContent
+import com.mamsky.stockalculator.android.screen.tactics.MartingaleScreen
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.ButtonIcon
 import com.mamsky.stockalculator.android.shared.Container
@@ -51,6 +62,37 @@ import com.mamsky.stockalculator.utils.currency
 import com.mamsky.stockalculator.utils.intOrNull
 import com.mamsky.stockalculator.utils.isZeroOrNull
 import com.mamsky.stockalculator.utils.rupiah
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun AveragePriceScreen2(
+    navController: NavController = rememberNavController(),
+) {
+    var tabIndex by remember { mutableIntStateOf(0) }
+    val tabs = listOf("General", "Schema", "Fibonacci", "Martingale")
+    val pagerState = rememberPagerState { tabs.size }
+    MainContent("Average Strategy") {
+        Column {
+            ScrollableTabRow(modifier = Modifier.fillMaxWidth(), selectedTabIndex = tabIndex) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(text = { Text(title) },
+                        selected = tabIndex == index,
+                        onClick = { tabIndex = index }
+                    )
+                }
+            }
+
+            HorizontalPager(state = pagerState) {
+                when (tabIndex) {
+                    0 -> AveragePriceTabContent()
+                    1 -> AverageDownPriceTabContent(navController)
+                    2 -> FibonacciTabContent(navController)
+                    3 -> MartingaleScreen(navController)
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun AveragePriceScreen(
@@ -70,6 +112,22 @@ fun AveragePriceScreen(
         )
     }
 }
+
+@Composable
+fun AveragePriceTabContent(
+    viewModel: AveragePriceVM = hiltViewModel()
+) {
+    val items by viewModel.allItems.collectAsState()
+    val averageItem by viewModel.average.collectAsState()
+    AveragePrice_Content(
+        list = items,
+        averageItem = averageItem,
+        onCalculate = { viewModel.buy(it.buy, it.lot) },
+        onClear = viewModel::clear,
+        onRemove = viewModel::remove
+    )
+}
+
 
 @Composable
 fun AveragePricePage(

@@ -5,17 +5,23 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
@@ -33,12 +39,23 @@ import com.mamsky.stockalculator.utils.onlyFloat
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.VSpacer
+import com.mamsky.stockalculator.data.InputModel
 
+object ConstantFee {
+    const val BUY = 0.15f
+    const val SELL = 0.20f
+}
+
+fun InputModel.default(): InputModel {
+    this.feeForBuy = ConstantFee.BUY
+    this.feeForSell = ConstantFee.SELL
+    return this
+}
 
 @Composable
 fun ChangeFeeContent(
-    buy: Float? = 0f,
-    sell: Float? = 0f,
+    buy: Float? = ConstantFee.BUY,
+    sell: Float? = ConstantFee.SELL,
     onApply: (Float, Float) -> Unit
 ) {
     var buyFee: String? by remember { mutableStateOf(buy.asString()) }
@@ -99,6 +116,78 @@ fun ChangeFeeContent(
     }
 }
 
+@Composable
+fun UseBrokerFee(
+    brokerFeeBuy: Float = 0.15f,
+    brokerFeeSell: Float = 0.20f,
+    withBrokerFee: Boolean = false,
+    onCheckChanged: (Boolean) -> Unit,
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End
+    ) {
+        Switch(
+            modifier = Modifier.height(8.dp),
+            checked = withBrokerFee,
+            onCheckedChange = onCheckChanged::invoke,
+        )
+        HSpacer(5.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Broker fee? Buy $brokerFeeBuy%, Sell $brokerFeeSell%")
+            HSpacer(5.dp)
+            OutlinedIconButton(
+                modifier = Modifier.size(20.dp),
+                onClick = onClick::invoke,
+            ) {
+                Icon(
+                    modifier = Modifier.size(12.dp),
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "ic_settings"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun UseBrokerFee2(
+    brokerFeeBuy: Float,
+    brokerFeeSell: Float,
+    withBrokerFee: Boolean = false,
+    onCheckChanged: (Boolean) -> Unit,
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End
+    ) {
+        Checkbox(
+            checked = withBrokerFee,
+            onCheckedChange = onCheckChanged::invoke
+        )
+        HSpacer(5.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Broker fee? Buy $brokerFeeBuy%, Sell $brokerFeeSell%")
+            HSpacer(5.dp)
+            OutlinedIconButton(
+                modifier = Modifier.size(20.dp),
+                onClick = onClick::invoke,
+            ) {
+                Icon(
+                    modifier = Modifier.size(12.dp),
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "ic_settings"
+                )
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true, showSystemUi = true)

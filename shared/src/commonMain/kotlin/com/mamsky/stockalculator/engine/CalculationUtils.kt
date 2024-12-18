@@ -38,6 +38,6 @@ fun Int.priceBuy(lot: Int, fee: Float = .00f): Float {
 
 fun Int.priceFee(lot: Int, rates: Float = .00f): Float {
     val price = this * lot.sheet()
-    val fee = price * (rates/100)
-    return fee
+    val fees = price * (rates/100)
+    return fees
 }

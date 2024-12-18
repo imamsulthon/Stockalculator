@@ -7,16 +7,13 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
@@ -25,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedIconButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -45,9 +41,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
+import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee
+import com.mamsky.stockalculator.android.screen.fee.default
+import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.Container
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
+import com.mamsky.stockalculator.android.shared.InputField2
 import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
@@ -59,6 +59,7 @@ import com.mamsky.stockalculator.data.ResultSell
 import com.mamsky.stockalculator.utils.asString
 import com.mamsky.stockalculator.utils.onlyInt
 import com.mamsky.stockalculator.utils.orZero
+import com.mamsky.stockalculator.utils.percent
 import com.mamsky.stockalculator.utils.percentFormat
 import com.mamsky.stockalculator.utils.rupiah
 
@@ -119,7 +120,7 @@ private fun TradingReturn_Content(
 ) {
 
     var showModal by remember { mutableStateOf(false) }
-    var model by remember { mutableStateOf(InputModel()) }
+    var model by remember { mutableStateOf(InputModel().default()) }
 
     var buyPrice: Int? by remember { mutableStateOf(0) }
     var sellPrice: Int? by remember { mutableStateOf(0) }
@@ -155,69 +156,42 @@ private fun TradingReturn_Content(
                     imeAction = ImeAction.Next
                 )
                 Spacer(modifier = Modifier.width(10.dp))
-                InputField(
+                InputField2(
                     modifier = Modifier.weight(1f),
                     usePrefix = false,
+                    useUpDown = true,
+                    up = {
+                        lot = lot.orZero() + 1
+                    },
+                    down = {
+                        lot = lot.orZero() - 1
+                    },
                     label = "Lot", value = lot.asString(), onValueChange = {
                         lot = it.onlyInt()
-                    })
+                    }
+                )
             }
         }
 
         item {
-            Row(
-                modifier = Modifier.padding(5.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Switch(
-                    modifier = Modifier.height(40.dp),
-                    checked = withBrokerFee,
-                    onCheckedChange = {
-                        withBrokerFee = it
-                    },
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(text = "Use Broker fee?")
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "Broker fee: Buy $brokerFeeBuy%, Sell $brokerFeeSell%")
-                Spacer(modifier = Modifier.width(10.dp))
-                OutlinedIconButton(
-                    modifier = Modifier.size(20.dp),
-                    onClick = { showModal = true },
-                ) {
-                    Icon(
-                        modifier = Modifier.size(12.dp),
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "ic_settings"
-                    )
-                }
-            }
             VSpacer(10.dp)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Button(
-                    modifier = Modifier.fillMaxWidth(0.85f),
-                    onClick = {
-                        onCalculate.invoke(
-                            InputModel(buyPrice.orZero(), sellPrice.orZero(), lot.orZero(), brokerFeeBuy, brokerFeeSell)
-                        )
-                    }, enabled = enableButton,
-                ) {
-                    Text(text = "Calculate")
-                }
-                HSpacer(10.dp)
-                OutlinedIconButton(
-                    modifier = Modifier.wrapContentSize(),
-                    onClick = onClear::invoke
-                ) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "ic_delete")
-                }
-            }
+            UseBrokerFee(
+                brokerFeeBuy = brokerFeeBuy,
+                brokerFeeSell = brokerFeeSell,
+                withBrokerFee = withBrokerFee,
+                onClick = { showModal = true },
+                onCheckChanged = { withBrokerFee = it }
+            )
+            VSpacer(10.dp)
+            ButtonAndClear("Calculate",
+                onClick = {
+                    onCalculate.invoke(
+                        InputModel(buyPrice.orZero(), sellPrice.orZero(), lot.orZero(), brokerFeeBuy, brokerFeeSell)
+                    )
+                },
+                enableButton = enableButton,
+                onClickIcon = onClear::invoke
+            )
             VSpacer()
         }
         item {
@@ -262,6 +236,8 @@ fun CalculationResult(
             Container {
                 Text(text = "Status", style = MaterialTheme.typography.bodyMedium)
                 Text(text = data.status, style = MaterialTheme.typography.bodySmall, color = data.profit.color())
+                if (data.status.isNotEmpty())
+                    Text(text = data.percentPL.percentFormat().percent(), style = MaterialTheme.typography.labelSmall, color = data.profit.color())
             }
             Container(Alignment.End) {
                 Text(text = "Profit", style = MaterialTheme.typography.bodyMedium)
@@ -271,7 +247,7 @@ fun CalculationResult(
         second = {
             Container {
                 Text(text = "Total Fee", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "${data.totalFee}",
+                Text(text = data.totalFee.rupiah(),
                     style = MaterialTheme.typography.bodySmall, color = data.totalFee.color())
             }
             Container(Alignment.End) {
@@ -310,7 +286,7 @@ private fun SellResult(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = (data.sellPrice * data.fee).rupiah(),
+                    text = data.sellFee.rupiah(true),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -356,7 +332,7 @@ private fun BuyResult(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = (data.price * data.fee).rupiah(),
+                    text = data.buyFee.rupiah(true),
                     style = MaterialTheme.typography.bodySmall
                 )
             }

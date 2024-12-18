@@ -39,13 +39,13 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.Route
 import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
+import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.InputField2
 import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
-import com.mamsky.stockalculator.android.shared.UseBrokerFee
 import com.mamsky.stockalculator.android.shared.VSpacer
 import com.mamsky.stockalculator.android.shared.color
 import com.mamsky.stockalculator.data.InputModel

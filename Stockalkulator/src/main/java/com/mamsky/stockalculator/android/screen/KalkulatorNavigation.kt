@@ -6,7 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.araarb.AraArbScreen
-import com.mamsky.stockalculator.android.screen.average.AveragePriceScreen
+import com.mamsky.stockalculator.android.screen.average.AveragePriceScreen2
 import com.mamsky.stockalculator.android.screen.profit.ProfitPerTickScreen
 import com.mamsky.stockalculator.android.screen.tactics.AverageDownPriceScreen
 import com.mamsky.stockalculator.android.screen.trading.TradingReturnScreen
@@ -46,7 +46,8 @@ fun AppNavigation(
         }
 
         composable(Route.AveragePrice) {
-            AveragePriceScreen(navController = navController)
+            AveragePriceScreen2(navController)
+//            AveragePriceScreen(navController = navController)
         }
 
         composable(Route.AverageDownPrice) {

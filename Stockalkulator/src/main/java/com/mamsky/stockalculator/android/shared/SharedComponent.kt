@@ -12,11 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Settings
@@ -28,19 +27,21 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mamsky.stockalculator.android.R
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -141,6 +142,56 @@ fun InputField2(
     )
 }
 
+
+@Composable
+fun InputField3(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    up: (() -> Unit)? = null,
+    down: (() -> Unit)? = null,
+    usePrefix: Boolean = true,
+    useUpDown: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Number,
+    imeAction: ImeAction = ImeAction.Done,
+    textStyle: TextStyle = MaterialTheme.typography.labelSmall,
+    iconSize: Dp = 18.dp
+) {
+    OutlinedTextField(
+        modifier = modifier,
+        textStyle = textStyle,
+        label = {
+            Text(text = label)
+        },
+        prefix = {
+            if (usePrefix) Text(text = "Rp ",)
+        },
+        leadingIcon = {
+            IconButton(
+                modifier = Modifier.size(iconSize),
+                onClick = { down?.invoke() }
+            ) {
+                Icon(painter = painterResource(R.drawable.ic_remove), contentDescription = null)
+            }
+        },
+        trailingIcon = {
+            IconButton(
+                modifier = Modifier.size(iconSize),
+                onClick = { up?.invoke() }
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = null)
+            }
+        },
+        value = value,
+        onValueChange = onValueChange::invoke,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = imeAction
+        ),
+    )
+}
+
 @Composable
 fun RowScope.Container(
     alignment: Alignment.Horizontal = Alignment.Start,
@@ -199,43 +250,6 @@ fun ButtonIcon(
 }
 
 @Composable
-fun LazyItemScope.UseBrokerFee(
-    brokerFeeBuy: Float,
-    brokerFeeSell: Float,
-    withBrokerFee: Boolean = false,
-    onCheckChanged: (Boolean) -> Unit,
-    onClick: () -> Unit
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.End
-    ) {
-        Switch(
-            modifier = Modifier.height(8.dp),
-            checked = withBrokerFee,
-            onCheckedChange = onCheckChanged::invoke,
-        )
-        HSpacer(5.dp)
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = "Broker fee? Buy $brokerFeeBuy%, Sell $brokerFeeSell%")
-            HSpacer(5.dp)
-            OutlinedIconButton(
-                modifier = Modifier.size(20.dp),
-                onClick = onClick::invoke,
-            ) {
-                Icon(
-                    modifier = Modifier.size(12.dp),
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "ic_settings"
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun ButtonAndClear(
     title: String,
     onClick: () -> Unit,
@@ -252,7 +266,7 @@ fun ButtonAndClear(
             modifier = Modifier.fillMaxWidth(0.85f),
             onClick = onClick::invoke, enabled = enableButton
         ) {
-            Text(text = title)
+            Text(text = title, color = Color.White)
         }
         HSpacer(10.dp)
         OutlinedIconButton(

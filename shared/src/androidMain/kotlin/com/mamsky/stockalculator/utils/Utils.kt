@@ -11,7 +11,20 @@ fun Int?.orZero(): Int = this ?: 0
 fun Int?.asString(): String = this?.toString() ?: ""
 fun Float?.asString(): String = this?.toString() ?: ""
 
-private val floatRegex = "[0-9]+(\\.[0-9]+)?\$"
+fun Int?.upFold(f: Int = 1, limit: Int? = null): Int {
+    if (this == null) return 0
+    val test = this + f
+    if (limit != null && this > limit) return this
+    return test
+}
+
+fun Int?.downFold(f: Int = 1, limit: Int? = 0): Int {
+    if (this == null) return this ?: 0
+    val test = this - f
+    if (limit != null && this <= limit) return this
+    return test
+}
+
 fun String.onlyInt(): Int? = if (this.isEmpty()) null else this.replace("[^0-9]".toRegex(), "").toInt()
 fun String.onlyFloat(): Float? = if (this.isEmpty()) null else this.toFloatOrNull()
 fun String?.intOrNull(): Int? = if (this.isNullOrEmpty() || this.isBlank()) null else this.replace("[^0-9]".toRegex(), "").toInt()
@@ -27,12 +40,14 @@ fun Float.percentFormat(): String {
     return "%.2f".format(this)
 }
 
+fun Any.percent(): String = "$this%"
+
 fun Float.rupiah(): String {
     return this.toInt().rupiah(currency = true, fraction = false)
 }
 
 fun Float.rupiah(fraction: Boolean): String {
-    return this.toInt().rupiah(currency = true)
+    return this.toInt().rupiah(currency = true, fraction = fraction)
 }
 
 fun Int?.rupiah(currency: Boolean = false, fraction: Boolean = true): String {
