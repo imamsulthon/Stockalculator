@@ -12,4 +12,5 @@ data class AverageItem(
     var lot: Int,
     var average: Float,
     var value: Float,
+    var pl: Float = 0f
 )

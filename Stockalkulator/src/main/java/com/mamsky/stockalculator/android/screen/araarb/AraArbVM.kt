@@ -22,4 +22,8 @@ class AraArbVM @Inject constructor(): ViewModel() {
         _items.addAll(result)
     }
 
+    fun reset() {
+        _items.clear()
+    }
+
 }

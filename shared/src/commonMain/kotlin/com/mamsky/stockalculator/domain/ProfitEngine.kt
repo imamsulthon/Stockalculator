@@ -17,10 +17,14 @@ interface ProfitEngine {
 class ProfitEngineImpl: ProfitEngine {
 
     override fun calculate(price: Int, lot: Int, feeBuy: Float, feeSell: Float): ProfitBundle {
-        val initValue = price.netPrice(lot, feeBuy)
-        val upperValues = initValue.upperPrices(price, lot, feeSell)
-        val belowValues = initValue.belowPrices(price, lot, feeSell)
         val list = mutableListOf<ProfitInRow>()
+        val initValue = price.netPrice(lot, feeBuy)
+        val fraction = price.fraction()
+        val mod = price % fraction
+        val dPrice = if (mod > 0) price.downFold0() else price
+        val uPrice = if (mod > 0) price.downFold0().upFold0() else price
+        val belowValues = initValue.belowPrices(dPrice, lot, feeSell)
+        val upperValues = initValue.upperPrices(uPrice, lot, feeSell)
         for (i in 0..9) {
             list.add(
                 ProfitInRow(belowValues[i], upperValues[i])
@@ -44,6 +48,18 @@ class ProfitEngineImpl: ProfitEngine {
         }
 
         return upperValues
+    }
+
+    private fun Int.upFold0(): Int {
+        val fr = this.fraction()
+        val temp = (this % fr)
+        return if (temp > 0) this + fr - temp else this
+    }
+
+    private fun Int.downFold0(): Int {
+        val fr = this.fraction()
+        val temp = (this % fr)
+        return if (temp > 0) this - temp else this
     }
 
     override fun Int.belowPrices(price: Int, lot: Int, feeSell: Float): MutableList<ProfitPerTick> {

@@ -31,7 +31,6 @@ import com.mamsky.stockalculator.android.R
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.VSpacer
 
-
 @Composable
 fun HomeScreen(
     trading: () -> Unit,
@@ -40,6 +39,9 @@ fun HomeScreen(
     araArb: () -> Unit,
     profit: () -> Unit,
     allCalculator: () -> Unit,
+    createStock: () -> Unit,
+    stockList: () -> Unit,
+    profitStrategy: () -> Unit
 ) {
     HomeScreenContent(
         trading = trading::invoke,
@@ -47,7 +49,10 @@ fun HomeScreen(
         averageDown = averageDown::invoke,
         araArb = araArb::invoke,
         profit = profit::invoke,
-        allCalculator = allCalculator::invoke
+        allCalculator = allCalculator::invoke,
+        createStock = createStock::invoke,
+        stockList = stockList::invoke,
+        profitStrategy = profitStrategy::invoke
     )
 }
 
@@ -60,6 +65,9 @@ internal fun HomeScreenContent(
     araArb: () -> Unit,
     profit: () -> Unit,
     allCalculator: () -> Unit,
+    createStock: () -> Unit,
+    stockList: () -> Unit,
+    profitStrategy: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -91,7 +99,7 @@ internal fun HomeScreenContent(
                     average.invoke()
                 }
                 VSpacer(10.dp)
-                MenuItem(title = "Average Down Price", iconId = R.drawable.ic_average) {
+                MenuItem(title = "Average Strategy", iconId = R.drawable.ic_average) {
                     averageDown.invoke()
                 }
                 VSpacer(10.dp)
@@ -102,9 +110,21 @@ internal fun HomeScreenContent(
                 MenuItem(title = "Profit Per Tick", iconId = R.drawable.investment) {
                     profit.invoke()
                 }
+//                VSpacer(10.dp)
+//                MenuItem(title = "All Calculator", iconId = R.drawable.ic_calculator) {
+//                    allCalculator.invoke()
+//                }
                 VSpacer(10.dp)
-                MenuItem(title = "All Calculator", iconId = R.drawable.ic_calculator) {
-                    allCalculator.invoke()
+                MenuItem(title = "Profit Strategy", iconId = R.drawable.ic_calculator) {
+                    profitStrategy.invoke()
+                }
+                VSpacer(10.dp)
+                MenuItem(title = "Create Stock", iconId = R.drawable.ic_calculator) {
+                    createStock.invoke()
+                }
+                VSpacer(10.dp)
+                MenuItem(title = "Stock List", iconId = R.drawable.ic_calculator) {
+                    stockList.invoke()
                 }
             }
         }
@@ -147,5 +167,8 @@ private fun MenuItem(
 @Preview(showBackground = true, showSystemUi = true, uiMode = UI_MODE_NIGHT_NO)
 @Composable
 private fun HomeScreen_Preview() {
-    HomeScreen(trading = {}, araArb = {}, average = {}, profit = {}, allCalculator = {}, averageDown = {})
+    HomeScreen(trading = {}, araArb = {}, average = {},
+        profit = {}, allCalculator = {}, averageDown = {},
+        createStock = {}, profitStrategy = {}, stockList = {}
+    )
 }

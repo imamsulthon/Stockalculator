@@ -32,6 +32,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
 import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee
+import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee3
 import com.mamsky.stockalculator.android.screen.profit.ProfitPerTick
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.HSpacer
@@ -41,7 +42,7 @@ import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
 import com.mamsky.stockalculator.data.AverageItem
 import com.mamsky.stockalculator.data.BuyItemModel
-import com.mamsky.stockalculator.domain.sheet
+import com.mamsky.stockalculator.engine.priceBuy
 import com.mamsky.stockalculator.utils.asString
 import com.mamsky.stockalculator.utils.downFold
 import com.mamsky.stockalculator.utils.onlyInt
@@ -50,16 +51,20 @@ import com.mamsky.stockalculator.utils.rupiah
 import com.mamsky.stockalculator.utils.upFold
 
 @Composable
-fun MartingaleScreen(
+fun MartingaleContent(
     navController: NavController,
-    viewModel: AverageDowPriceVM = hiltViewModel(),
+    viewModel: MartingaleVM = hiltViewModel(key = "martingale"),
 ) {
+
+    val avgModel by viewModel.avgModel.collectAsState()
     val result by viewModel.allItems.collectAsState()
     val average by viewModel.buyingAverage.collectAsState()
     val averageResult by viewModel.averageResult.collectAsState()
 
-    MartingaleContent(
+    Content(
         navController,
+        events = viewModel::events,
+        model = avgModel,
         result = result,
         averageItem = average,
         averageResult = averageResult,
@@ -72,21 +77,24 @@ fun MartingaleScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MartingaleContent(
+private fun Content(
     navController: NavController,
+    model: AvgDownModel = AvgDownModel(),
+    events: (AvgFormEvent) -> Unit,
     result: List<BuyItemModel> = emptyList(),
     averageItem: AverageItem? = null,
     averageResult: AverageItem? = null,
     onClear: () -> Unit,
     onCalculate: (AverageItem, Int, Int, Int, Int, Int, Float, Boolean, Boolean) -> Unit
 ) {
-    var initLot: Int? by remember { mutableStateOf(0) }
-    var initAveragePrice: Int? by remember { mutableStateOf(0) }
+
+    var initLot: Int? by remember { mutableStateOf(null) }
+    var initAveragePrice: Int? by remember { mutableStateOf(null) }
     val initInvested: Int? by remember(initLot, initAveragePrice) {
-        mutableIntStateOf(initLot.orZero().sheet() * initAveragePrice.orZero())
+        mutableIntStateOf(initAveragePrice.orZero().priceBuy(initLot ?: 0).toInt())
     }
-    var startPrice: Int? by remember { mutableStateOf(120) }
-    var endPrice: Int? by remember { mutableStateOf(100) }
+    var startPrice: Int? by remember { mutableStateOf(null) }
+    var endPrice: Int? by remember { mutableStateOf(null) }
     var foldPrice: Int? by remember { mutableStateOf(1) }
     var startLot: Int? by remember { mutableStateOf(1) }
     var lotFactor: Int? by remember { mutableStateOf(1) }
@@ -99,7 +107,7 @@ fun MartingaleContent(
 
     LazyColumn(modifier = Modifier.padding(10.dp)) {
         item {
-            Text(text = "Initial Investment")
+            Text(text = "Initial Investment", style = MaterialTheme.typography.titleSmall)
             Row(modifier = Modifier.padding(vertical = 5.dp)) {
                 InputField(
                     modifier = Modifier.weight(1f).padding(end = 5.dp),
@@ -144,7 +152,7 @@ fun MartingaleContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Buying on Downtrend Prices")
+                Text(text = "Buying on Downtrend Prices", style = MaterialTheme.typography.titleSmall)
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -245,26 +253,31 @@ fun MartingaleContent(
         }
 
         item {
-            UseBrokerFee(
-                buyFee, buyFee,
-                withBrokerFee = useBroker,
-                onCheckChanged = { useBroker = it },
-                onClick = { showFeeDialog = true }
-            )
-            VSpacer(5.dp)
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Switch(
-                    modifier = Modifier.padding(end = 6.dp),
-                    checked = revertLot,
-                    onCheckedChange = {
-                        revertLot = it
-                    }
+                UseBrokerFee3(
+                    buyFee, buyFee,
+                    withBrokerFee = useBroker,
+                    onCheckChanged = { useBroker = it },
+                    onClick = { showFeeDialog = true }
                 )
-                Text("Revert Lot Sequence")
-                HSpacer()
+                HSpacer(10.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Switch(
+                        modifier = Modifier.padding(end = 6.dp),
+                        checked = revertLot,
+                        onCheckedChange = {
+                            revertLot = it
+                        }
+                    )
+                    Text("Revert Lot Sequence")
+                    HSpacer()
+                }
             }
+
             VSpacer(5.dp)
         }
 
@@ -299,17 +312,19 @@ fun MartingaleContent(
             VSpacer(10.dp)
         }
 
-        item {
-            Text("Suggestion Result")
-            VSpacer(5.dp)
-            RowItemTitle()
+        if (result.isNotEmpty()) {
+            item {
+                Text("Suggestion Result", style = MaterialTheme.typography.titleSmall)
+                VSpacer(5.dp)
+                RowItemTitle()
+            }
+
+            items(items = result) {
+                RowItemRes(it.price, it.lot, it.total)
+            }
         }
 
-        items(items = result) {
-            RowItemRes(it.price, it.lot, it.total)
-        }
-
-        if (averageItem != null) {
+        if (averageItem != null && result.isNotEmpty()) {
             item {
                 Divider(modifier = Modifier.padding(vertical = 5.dp))
                 RowItemRes(averageItem.average.toInt(), averageItem.lot, averageItem.value.toInt())
@@ -319,7 +334,7 @@ fun MartingaleContent(
         if (averageResult != null) {
             item {
                 VSpacer(10.dp)
-                Text("Final Result")
+                Text("Final Result", style = MaterialTheme.typography.titleSmall)
                 RowItemTitle2()
                 RowItemRes(averageResult.average.toInt(), averageResult.lot, averageResult.value.toInt())
                 OutlinedButton(
@@ -353,7 +368,7 @@ fun MartingaleContent(
 @Composable
 private fun Preview() {
     PageContent("Martingale Content") {
-        MartingaleContent (
+        Content(model = AvgDownModel(), events = {},
             navController = rememberNavController(),
             onClear = {}
         ) { _, _, _, _, _, _, _, _, _ -> }

@@ -17,7 +17,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,7 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
-import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee
+import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee3
 import com.mamsky.stockalculator.android.screen.profit.ProfitPerTick
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.HSpacer
@@ -52,18 +51,21 @@ import com.mamsky.stockalculator.utils.upFold
 @Composable
 fun FibonacciTabContent(
     navController: NavController,
-    viewModel: AverageDowPriceVM = hiltViewModel(),
+    viewModel: FibonacciVM = hiltViewModel(),
 ) {
 
+    val model by viewModel.avgModel.collectAsState()
     val result by viewModel.allItems.collectAsState()
     val average by viewModel.buyingAverage.collectAsState()
     val averageResult by viewModel.averageResult.collectAsState()
 
     FibonacciContent(
         navController,
+        model,
         result = result,
         averageItem = average,
         averageResult = averageResult,
+        event = viewModel::events,
         onClear = viewModel::clear,
         onCalculate = { init, startPrice, endPrice, foldPrice, lotFraction, fee, revertLot, uptrend ->
             viewModel.fibonacci(init, startPrice, endPrice, foldPrice, lotFraction, fee, revertLot, uptrend)
@@ -71,60 +73,32 @@ fun FibonacciTabContent(
     )
 }
 
-@Composable
-fun FibonacciScreen(
-    navController: NavController,
-    viewModel: AverageDowPriceVM = hiltViewModel(),
-) {
-
-    val result by viewModel.allItems.collectAsState()
-    val average by viewModel.buyingAverage.collectAsState()
-    val averageResult by viewModel.averageResult.collectAsState()
-
-    PageContent("Average Price Fibonacci Number") {
-        FibonacciContent(
-            navController,
-            result = result,
-            averageItem = average,
-            averageResult = averageResult,
-            onClear = viewModel::clear,
-            onCalculate = { init, startPrice, endPrice, foldPrice, lotFraction, fee, revertLot, uptrend ->
-                viewModel.fibonacci(init, startPrice, endPrice, foldPrice, lotFraction, fee, revertLot, uptrend)
-            },
-        )
-    }
-}
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FibonacciContent(
     navController: NavController,
+    model: AvgDownModel,
+    event: (AvgFormEvent) -> Unit,
     result: List<BuyItemModel> = emptyList(),
     averageItem: AverageItem? = null,
     averageResult: AverageItem? = null,
     onClear: () -> Unit,
     onCalculate: (AverageItem, Int, Int, Int, Int, Float, Boolean, Boolean) -> Unit
 ) {
-    var initLot: Int? by remember { mutableStateOf(0) }
-    var initAveragePrice: Int? by remember { mutableStateOf(0) }
+    var initLot: Int? by remember { mutableStateOf(null) }
+    var initAveragePrice: Int? by remember { mutableStateOf(null) }
     val initInvested: Int? by remember(initLot, initAveragePrice) {
         mutableIntStateOf(initLot.orZero().sheet() * initAveragePrice.orZero())
     }
-    var startPrice: Int? by remember { mutableStateOf(120) }
-    var endPrice: Int? by remember { mutableStateOf(100) }
-    var foldPrice: Int? by remember { mutableStateOf(1) }
-    var lotFactor: Int? by remember { mutableStateOf(1) }
-    var revertLot by remember { mutableStateOf(false) }
     var buyingUptrend by remember { mutableStateOf(false) }
-
+//
     var useBroker by remember { mutableStateOf(false) }
     var showFeeDialog by remember { mutableStateOf(false) }
-    var buyFee by remember { mutableFloatStateOf(0f) }
+//    var buyFee by remember { mutableFloatStateOf(0f) }
 
     LazyColumn(modifier = Modifier.padding(10.dp)) {
         item {
-            Text(text = "Initial Investment")
+            Text(text = "Initial Investment", style = MaterialTheme.typography.titleSmall)
             Row(modifier = Modifier.padding(vertical = 5.dp)) {
                 InputField(
                     modifier = Modifier.weight(1f).padding(end = 5.dp),
@@ -169,7 +143,7 @@ fun FibonacciContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Buying on Downtrend Prices")
+                Text(text = "Buying on Downtrend Prices", style = MaterialTheme.typography.titleSmall)
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -188,9 +162,10 @@ fun FibonacciContent(
                 InputField(
                     modifier = Modifier.weight(1f).padding(end = 5.dp),
                     label = "Start Price",
-                    value = startPrice.asString(),
+                    value = model.startPrice.asString(),
                     onValueChange = {
-                        startPrice = it.onlyInt()
+                        event.invoke(AvgFormEvent.startPrice(it.onlyInt()))
+//                        startPrice = it.onlyInt()
                     },
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
@@ -198,9 +173,9 @@ fun FibonacciContent(
                 InputField(
                     modifier = Modifier.weight(1f).padding(end = 5.dp),
                     label = "End Price",
-                    value = endPrice.asString(),
+                    value = model.endPrice.asString(),
                     onValueChange = {
-                        endPrice = it.onlyInt()
+                        event.invoke(AvgFormEvent.endPrice(it.onlyInt()))
                     },
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
@@ -216,14 +191,14 @@ fun FibonacciContent(
                     usePrefix = false,
                     useUpDown = true,
                     up = {
-                        foldPrice = foldPrice.upFold()
+                        event.invoke(AvgFormEvent.foldPrice(model.foldPrice.upFold()))
                     },
                     down = {
-                        foldPrice = foldPrice.downFold()
+                        event.invoke(AvgFormEvent.foldPrice(model.foldPrice.downFold()))
                     },
-                    value = foldPrice.asString(),
+                    value = model.foldPrice.asString(),
                     onValueChange = {
-                        foldPrice = it.onlyInt()
+                        event.invoke(AvgFormEvent.foldPrice(it.onlyInt()))
                     },
                     textStyle = MaterialTheme.typography.bodySmall,
                     imeAction = ImeAction.Next
@@ -234,14 +209,14 @@ fun FibonacciContent(
                     usePrefix = false,
                     useUpDown = true,
                     up = {
-                        lotFactor = lotFactor.upFold()
+                        event.invoke(AvgFormEvent.factorLot(model.factorLot.upFold()))
                     },
                     down = {
-                        lotFactor = lotFactor.downFold()
+                        event.invoke(AvgFormEvent.factorLot(model.factorLot.downFold()))
                     },
-                    value = lotFactor.asString(),
+                    value = model.factorLot.asString(),
                     onValueChange = {
-                        lotFactor = it.onlyInt()
+                        event.invoke(AvgFormEvent.factorLot(it.onlyInt()))
                     },
                     textStyle = MaterialTheme.typography.bodySmall,
                     imeAction = ImeAction.Next
@@ -251,25 +226,29 @@ fun FibonacciContent(
         }
 
         item {
-            UseBrokerFee(
-                buyFee, buyFee,
-                withBrokerFee = useBroker,
-                onCheckChanged = { useBroker = it },
-                onClick = { showFeeDialog = true }
-            )
-            VSpacer(5.dp)
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Switch(
-                    modifier = Modifier.padding(end = 6.dp),
-                    checked = revertLot,
-                    onCheckedChange = {
-                        revertLot = it
-                    }
+                UseBrokerFee3(
+                    model.fee, model.fee,
+                    withBrokerFee = useBroker,
+                    onCheckChanged = { useBroker = it },
+                    onClick = { showFeeDialog = true }
                 )
-                Text("Revert Lot Sequence")
-                HSpacer()
+                HSpacer(10.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Switch(
+                        modifier = Modifier.padding(end = 6.dp),
+                        checked = model.revertLot,
+                        onCheckedChange = {
+                            event.invoke(AvgFormEvent.revertLot(it))
+                        }
+                    )
+                    Text("Revert Lot Sequence")
+                    HSpacer()
+                }
             }
             VSpacer(5.dp)
         }
@@ -281,39 +260,35 @@ fun FibonacciContent(
                 onClick = {
                     onCalculate.invoke(
                         AverageItem(initLot.orZero(), initAveragePrice.orZero().toFloat(), initInvested.orZero().toFloat()),
-                        startPrice.orZero(),
-                        endPrice.orZero(),
-                        foldPrice.orZero(),
-                        lotFactor.orZero(),
-                        buyFee,
-                        revertLot,
+                        model.startPrice.orZero(),
+                        model.endPrice.orZero(),
+                        model. foldPrice.orZero(),
+                        model.factorLot.orZero(),
+                        model.fee,
+                        model.revertLot,
                         buyingUptrend,
                     )
                 },
                 onClickIcon = {
-                    startPrice = 0
-                    endPrice = 0
-                    foldPrice = 0
-                    lotFactor = 0
-                    initLot = 0
-                    initAveragePrice = 0
                     onClear.invoke()
                 },
             )
             VSpacer(10.dp)
         }
 
-        item {
-            Text("Suggestion Result")
-            VSpacer(5.dp)
-            RowItemTitle()
+        if (result.isNotEmpty()) {
+            item {
+                Text("Suggestion Result", style = MaterialTheme.typography.titleSmall)
+                VSpacer(5.dp)
+                RowItemTitle()
+            }
+
+            items(items = result) {
+                RowItemRes(it.price, it.lot, it.total)
+            }
         }
 
-        items(items = result) {
-            RowItemRes(it.price, it.lot, it.total)
-        }
-
-        if (averageItem != null) {
+        if (averageItem != null && result.isNotEmpty()) {
             item {
                 Divider(modifier = Modifier.padding(vertical = 5.dp))
                 RowItemRes(averageItem.average.toInt(), averageItem.lot, averageItem.value.toInt())
@@ -323,7 +298,7 @@ fun FibonacciContent(
         if (averageResult != null) {
             item {
                 VSpacer(10.dp)
-                Text("Final Result")
+                Text("Final Result", style = MaterialTheme.typography.titleSmall)
                 RowItemTitle2()
                 RowItemRes(averageResult.average.toInt(), averageResult.lot, averageResult.value.toInt())
                 OutlinedButton(
@@ -345,7 +320,7 @@ fun FibonacciContent(
             sheetState = rememberModalBottomSheetState()
         ) {
             ChangeFeeContent { buy, _ ->
-                buyFee = buy
+                event.invoke(AvgFormEvent.fee(buy))
                 showFeeDialog = false
             }
         }
@@ -353,11 +328,12 @@ fun FibonacciContent(
 
 }
 
-@Preview(showSystemUi = true, showBackground = true)
+@Preview(showBackground = true)
 @Composable
 private fun Preview2() {
     PageContent("Average Price Fibonacci") {
         FibonacciContent(
+            model = AvgDownModel(10, 20, 30), event = {},
             navController = rememberNavController(),
             onClear = {}
         ) { _, _, _, _, _, _, _, _ -> }

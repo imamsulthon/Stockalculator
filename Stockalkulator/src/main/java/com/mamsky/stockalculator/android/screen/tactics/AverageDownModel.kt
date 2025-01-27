@@ -1,14 +1,27 @@
 package com.mamsky.stockalculator.android.screen.tactics
 
 data class AvgDownModel(
-    var topPrice: Int,
-    var bottomPrice: Int,
-    var factorPrice: Int,
-    var topLot: Int,
-    var bottomLot: Int,
-    var factorLot: Int,
+    var startPrice: Int? =null,
+    var endPrice: Int? = null,
+    var foldPrice: Int? = null,
+    var startLot: Int? = null,
+    var endLot: Int? = null,
+    var factorLot: Int? = null,
     var fee: Float = 0f,
+    var revertLot: Boolean = false,
 )
+
+
+sealed class AvgFormEvent {
+    data class startPrice(val v: Int?) : AvgFormEvent()
+    data class endPrice(val v: Int?) : AvgFormEvent()
+    data class foldPrice(val v: Int?) : AvgFormEvent()
+    data class startLot(val v: Int?) : AvgFormEvent()
+    data class endLot(val v: Int?) : AvgFormEvent()
+    data class factorLot(val v: Int?) : AvgFormEvent()
+    data class fee(val v: Float) : AvgFormEvent()
+    data class revertLot(val v: Boolean) : AvgFormEvent()
+}
 
 object LotSequence {
 
@@ -96,6 +109,16 @@ object LotSequence {
                 v += f
                 callback.invoke(v)
             }
+        }
+        return list
+    }
+
+    inline fun pyramid(number: Int, size: Int, crossinline callback: (Int) -> Boolean ): List<Int> {
+        val list = mutableListOf<Int>()
+        for (i in 0 ..size) {
+            list.add(number)
+            val point = callback.invoke(number)
+            if (point) break
         }
         return list
     }

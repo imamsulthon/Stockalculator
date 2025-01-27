@@ -6,9 +6,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.araarb.AraArbScreen
-import com.mamsky.stockalculator.android.screen.average.AveragePriceScreen2
+import com.mamsky.stockalculator.android.screen.average.AveragePriceScreen
+import com.mamsky.stockalculator.android.screen.average.AverageStrategyScreen2
+import com.mamsky.stockalculator.android.screen.draft.CreateStockScreen
+import com.mamsky.stockalculator.android.screen.draft.MyStocksScreen
 import com.mamsky.stockalculator.android.screen.profit.ProfitPerTickScreen
-import com.mamsky.stockalculator.android.screen.tactics.AverageDownPriceScreen
+import com.mamsky.stockalculator.android.screen.tactics.ProfitStrategyScreen
 import com.mamsky.stockalculator.android.screen.trading.TradingReturnScreen
 
 
@@ -27,7 +30,7 @@ fun AppNavigation(
                     navController.navigate(Route.AveragePrice)
                 },
                 averageDown = {
-                    navController.navigate(Route.AverageDownPrice)
+                    navController.navigate(Route.AverageStrategy)
                 },
                 araArb = {
                     navController.navigate(Route.AutoRejection)
@@ -37,7 +40,16 @@ fun AppNavigation(
                 },
                 allCalculator = {
                     navController.navigate(Route.AllCalculator)
-                }
+                },
+                createStock = {
+                    navController.navigate(Route.CreateStock)
+                },
+                stockList = {
+                    navController.navigate(Route.StockList)
+                },
+                profitStrategy = {
+                    navController.navigate(Route.ProfitStrategy)
+                },
             )
         }
 
@@ -46,12 +58,11 @@ fun AppNavigation(
         }
 
         composable(Route.AveragePrice) {
-            AveragePriceScreen2(navController)
-//            AveragePriceScreen(navController = navController)
+            AveragePriceScreen(navController = navController)
         }
 
-        composable(Route.AverageDownPrice) {
-            AverageDownPriceScreen(navController = navController)
+        composable(Route.AverageStrategy) {
+            AverageStrategyScreen2(navController)
         }
 
         composable(Route.AutoRejection) {
@@ -65,6 +76,16 @@ fun AppNavigation(
         composable(Route.AllCalculator) {
             AllCalculatorScreen()
         }
+        composable(Route.CreateStock) {
+            CreateStockScreen(navController)
+        }
+        composable(Route.ProfitStrategy) {
+            ProfitStrategyScreen(navController)
+        }
+
+        composable(Route.StockList) {
+            MyStocksScreen(navController)
+        }
     }
 }
 
@@ -72,8 +93,12 @@ object Route {
     const val Home = "home"
     const val TradingReturn = "trading-return"
     const val AveragePrice = "average-price"
-    const val AverageDownPrice = "average-price2"
+    const val AverageStrategy = "average-strategy"
     const val AutoRejection = "auto-rejection"
     const val ProfitPerTick = "profit-per-tick/{lots}/{price}"
     const val AllCalculator = "all-calculator"
+    const val ProfitStrategy = "profit-strategy"
+    const val CreateStock = "create-stock"
+    const val StockList = "stock-list"
+
 }

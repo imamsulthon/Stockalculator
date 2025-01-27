@@ -31,13 +31,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
-import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee
+import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee3
 import com.mamsky.stockalculator.android.screen.profit.ProfitPerTick
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.InputField3
-import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
 import com.mamsky.stockalculator.data.AverageItem
@@ -53,31 +52,9 @@ import com.mamsky.stockalculator.utils.upFold
 private const val TITLE = "Average Down Price"
 
 @Composable
-fun AverageDownPriceScreen(
-    viewModel: AverageDowPriceVM = hiltViewModel(),
-    navController: NavController = rememberNavController()
-) {
-    val result by viewModel.allItems.collectAsState()
-    val average by viewModel.buyingAverage.collectAsState()
-    val averageResult by viewModel.averageResult.collectAsState()
-    MainContent(TITLE, onBack = navController::popBackStack) {
-        Content(
-            navController,
-            result = result,
-            averageItem = average,
-            averageResult = averageResult,
-            onClear = viewModel::clear,
-            onCalculate = { init, startPrice, endPrice, foldPrice, minLot, maxLot, lotFraction, fee, revertLot, uptrend ->
-                viewModel.exercise(init, endPrice, startPrice, foldPrice, minLot, maxLot, lotFraction, fee, revertLot, uptrend)
-            },
-        )
-    }
-}
-
-@Composable
 fun AverageDownPriceTabContent(
     navController: NavController = rememberNavController(),
-    viewModel: AverageDowPriceVM = hiltViewModel(),
+    viewModel: AverageDowPriceVM = hiltViewModel(key = "schema"),
 ) {
     val result by viewModel.allItems.collectAsState()
     val average by viewModel.buyingAverage.collectAsState()
@@ -88,16 +65,16 @@ fun AverageDownPriceTabContent(
         averageItem = average,
         averageResult = averageResult,
         onClear = viewModel::clear,
-        onCalculate = { init, topLot, bottomLot, foldPrice, minLot, maxLot, lotFraction, fee, revertLot, uptrend ->
-            viewModel.exercise(init, bottomLot, topLot, foldPrice, minLot, maxLot, lotFraction, fee, revertLot, uptrend)
+        onCalculate = { init, startPrice, endPrice, foldPrice, minLot, maxLot, lotFraction, fee, revertLot, uptrend ->
+            viewModel.exercise(init, startPrice, endPrice, foldPrice, minLot, maxLot, lotFraction, fee, revertLot, uptrend)
         },
     )
 }
 
 @Composable
 fun AverageDownPriceContent(
+    navController: NavController = rememberNavController(),
     viewModel: AverageDowPriceVM = hiltViewModel(),
-    navController: NavController = rememberNavController()
 ) {
     val result by viewModel.allItems.collectAsState()
     val average by viewModel.buyingAverage.collectAsState()
@@ -110,8 +87,8 @@ fun AverageDownPriceContent(
             averageItem = average,
             averageResult = averageResult,
             onClear = viewModel::clear,
-            onCalculate = { init, topLot, bottomLot, foldPrice, minLot, maxLot, lotFraction, fee, revertLot, uptrend ->
-                viewModel.exercise(init, bottomLot, topLot, foldPrice, minLot, maxLot, lotFraction, fee, revertLot, uptrend)
+            onCalculate = { init, startPrice, endPrice, foldPrice, minLot, maxLot, lotFraction, fee, revertLot, uptrend ->
+                viewModel.exercise(init, startPrice, endPrice, foldPrice, minLot, maxLot, lotFraction, fee, revertLot, uptrend)
             },
         )
     }
@@ -147,7 +124,7 @@ private fun Content(
 
     LazyColumn(modifier = Modifier.padding(10.dp)) {
         item {
-            Text(text = "Initial Investment")
+            Text(text = "Initial Investment", style = MaterialTheme.typography.titleSmall)
             Row(modifier = Modifier.padding(vertical = 5.dp)) {
                 InputField(
                     modifier = Modifier.weight(1f).padding(end = 5.dp),
@@ -192,7 +169,7 @@ private fun Content(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Buying on Downtrend Prices")
+                Text(text = "Buying on Downtrend Prices", style = MaterialTheme.typography.titleSmall)
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -296,25 +273,26 @@ private fun Content(
         }
 
         item {
-            UseBrokerFee(
-                buyFee, buyFee,
-                withBrokerFee = useBroker,
-                onCheckChanged = { useBroker = it },
-                onClick = { showFeeDialog = true }
-            )
-            VSpacer(5.dp)
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Switch(
-                    modifier = Modifier.padding(end = 6.dp),
-                    checked = revertLot,
-                    onCheckedChange = {
-                        revertLot = it
-                    }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                UseBrokerFee3(
+                    buyFee, buyFee,
+                    withBrokerFee = useBroker,
+                    onCheckChanged = { useBroker = it },
+                    onClick = { showFeeDialog = true }
                 )
-                Text("Revert Lot Sequence")
-                
+                HSpacer(5.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Switch(
+                        modifier = Modifier.padding(end = 6.dp),
+                        checked = revertLot,
+                        onCheckedChange = {
+                            revertLot = it
+                        }
+                    )
+                    Text("Revert Lot Sequence")
+                }
             }
             VSpacer(5.dp)
         }
@@ -352,17 +330,18 @@ private fun Content(
             VSpacer(10.dp)
         }
 
-        item {
-            Text("Suggestion Result")
-            VSpacer(5.dp)
-            RowItemTitle()
+        if (result.isNotEmpty()) {
+            item {
+                Text("Suggestion Result", style = MaterialTheme.typography.titleSmall)
+                VSpacer(5.dp)
+                RowItemTitle()
+            }
+            items(items = result) {
+                RowItemRes(it.price, it.lot, it.total)
+            }
         }
 
-        items(items = result) {
-            RowItemRes(it.price, it.lot, it.total)
-        }
-
-        if (averageItem != null) {
+        if (averageItem != null && result.isNotEmpty()) {
             item {
                 Divider(modifier = Modifier.padding(vertical = 5.dp))
                 RowItemRes(averageItem.average.toInt(), averageItem.lot, averageItem.value.toInt())
@@ -372,7 +351,7 @@ private fun Content(
         if (averageResult != null) {
             item {
                 VSpacer(10.dp)
-                Text("Final Result")
+                Text("Final Result", style = MaterialTheme.typography.titleSmall)
                 RowItemTitle2()
                 RowItemRes(averageResult.average.toInt(), averageResult.lot, averageResult.value.toInt())
                 OutlinedButton(
@@ -403,7 +382,7 @@ private fun Content(
 }
 
 
-@Preview(showSystemUi = true, showBackground = true)
+@Preview(showBackground = true)
 @Composable
 private fun Preview() {
     PageContent("Average Down Price") {

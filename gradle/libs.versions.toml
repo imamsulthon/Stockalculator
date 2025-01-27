@@ -14,6 +14,9 @@ androidx-hilt-compiler = "1.1.0"
 androidx-hilt-navigation = "1.1.0"
 androidx-navigation-compose = "2.7.6"
 timber = "5.0.1"
+compose-chart = "0.1.0"
+co-yml-ycharts = "2.1.0"
+vico = "1.16.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -31,6 +34,14 @@ hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.re
 androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "androidx-hilt-compiler"}
 androidx-hilt-navigation = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "androidx-hilt-navigation"}
 timber = {module = "com.jakewharton.timber:timber", version.ref = "timber"}
+compose-chart = { module = "com.github.ehsannarmani:ComposeCharts", version.ref = "compose-chart"}
+co-yml-chart = { module = "co.yml:ycharts", version.ref = "co-yml-ycharts"}
+
+vico-compose = { group = "com.patrykandpatrick.vico", name = "compose", version.ref = "vico" }
+vico-compose-m2 = { group = "com.patrykandpatrick.vico", name = "compose-m2", version.ref = "vico" }
+vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
+vico-core = { group = "com.patrykandpatrick.vico", name = "core", version.ref = "vico" }
+vico-views = { group = "com.patrykandpatrick.vico", name = "views", version.ref = "vico" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

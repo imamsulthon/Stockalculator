@@ -72,7 +72,7 @@ fun MainScreenNavGraph(
         composable(Route.AveragePrice) {
             AveragePricePage()
         }
-        composable(Route.AverageDownPrice) {
+        composable(Route.AverageStrategy) {
             AverageDownPriceContent()
         }
 
@@ -94,7 +94,7 @@ fun BottomBar(navController: NavHostController) {
         BottomBarScreen.AutoRejection,
         BottomBarScreen.TradingReturn,
         BottomBarScreen.AveragePrice,
-        BottomBarScreen.AveragePrice2,
+        BottomBarScreen.AverageStrategy,
         BottomBarScreen.ProfitPerTick,
     )
 
@@ -186,10 +186,10 @@ sealed class BottomBarScreen(
         description = Route.AveragePrice,
         page = 1
     )
-    data object AveragePrice2 : BottomBarScreen(
-        title = "Average Down Price ",
+    data object AverageStrategy : BottomBarScreen(
+        title = "Average Strategy",
         icon = R.drawable.ic_average,
-        description = Route.AverageDownPrice,
+        description = Route.AverageStrategy,
         page = 2
     )
 

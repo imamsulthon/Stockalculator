@@ -42,8 +42,7 @@ import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
 import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.HSpacer
-import com.mamsky.stockalculator.android.shared.InputField
-import com.mamsky.stockalculator.android.shared.InputField2
+import com.mamsky.stockalculator.android.shared.InputField3
 import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
@@ -53,10 +52,14 @@ import com.mamsky.stockalculator.data.ProfitBundle
 import com.mamsky.stockalculator.data.ProfitInRow
 import com.mamsky.stockalculator.domain.ProfitEngineImpl
 import com.mamsky.stockalculator.utils.asString
+import com.mamsky.stockalculator.utils.downFold
+import com.mamsky.stockalculator.utils.downFold0
 import com.mamsky.stockalculator.utils.notZeroNull
 import com.mamsky.stockalculator.utils.onlyInt
 import com.mamsky.stockalculator.utils.percentFormat
 import com.mamsky.stockalculator.utils.rupiah
+import com.mamsky.stockalculator.utils.upFold
+import com.mamsky.stockalculator.utils.upFold0
 
 private const val PAGE_TITLE = "Profit Per Tick"
 
@@ -136,19 +139,28 @@ private fun ProfitPerTick_Content(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                InputField(
+                InputField3(
                     modifier = Modifier.weight(1f),
                     label = "Price", value = buyPrice.asString(), onValueChange = {
                         buyPrice = it.onlyInt()
+                    },
+                    useUpDown = true,
+                    up = {
+                        buyPrice = buyPrice.upFold0()
+                    },
+                    down = {
+                        buyPrice = buyPrice.downFold0()
                     },
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
                 Spacer(modifier = Modifier.width(10.dp))
-                InputField2(
+                InputField3(
                     usePrefix = false,
                     modifier = Modifier.weight(1f),
                     useUpDown = true,
+                    up = { lot = lot.upFold() },
+                    down = { lot = lot.downFold() },
                     textStyle = MaterialTheme.typography.bodyMedium,
                     label = "Lot", value = lot.asString(), onValueChange = {
                         lot = it.onlyInt()
@@ -303,7 +315,7 @@ fun RowScope.TableCellItem(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ProfitPerTick_Preview() {
-    val bundle = ProfitEngineImpl().calculate(120, 100, .0f, .0f)
+    val bundle = ProfitEngineImpl().calculate(3212, 100, .0f, .0f)
     MainContent(PAGE_TITLE) {
         ProfitPerTick_Content(bundle, onCalculate = {}, onClear = {},)
     }

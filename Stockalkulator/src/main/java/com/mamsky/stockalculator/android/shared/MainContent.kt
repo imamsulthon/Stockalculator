@@ -1,5 +1,6 @@
 package com.mamsky.stockalculator.android.shared
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
@@ -21,10 +22,14 @@ import androidx.compose.ui.tooling.preview.Preview
 fun MainContent(
     title: String = "",
     onBack: (() -> Unit)? = null,
+    bottomContent: @Composable () -> Unit = {},
     contents: @Composable () -> Unit,
 ) {
     Scaffold(
         topBar = { MyAppBar(title) { onBack?.invoke() } },
+        bottomBar = {
+            bottomContent()
+        }
     ) { padding ->
         Surface(modifier = Modifier.padding(padding)) {
             contents()
@@ -43,7 +48,7 @@ fun PageContent(
              TopAppBar(title = { Text(text = title) })
         },
     ) { padding ->
-        Surface(modifier = Modifier.padding(padding)) {
+        Box(modifier = Modifier.padding(padding)) {
             contents()
         }
     }

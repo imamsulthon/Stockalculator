@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,18 +28,20 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.mamsky.stockalculator.data.ARType
-import com.mamsky.stockalculator.data.AutoRejection
-import com.mamsky.stockalculator.domain.RejectionEngineImpl
-import com.mamsky.stockalculator.utils.asString
-import com.mamsky.stockalculator.utils.onlyInt
-import com.mamsky.stockalculator.utils.percentFormat
+import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.Container
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
+import com.mamsky.stockalculator.data.ARType
+import com.mamsky.stockalculator.data.AutoRejection
+import com.mamsky.stockalculator.domain.RejectionEngineImpl
+import com.mamsky.stockalculator.utils.asString
+import com.mamsky.stockalculator.utils.onlyInt
+import com.mamsky.stockalculator.utils.percentFormat
+import com.mamsky.stockalculator.utils.rupiah
 import kotlin.math.abs
 
 @Composable
@@ -56,6 +57,7 @@ fun AraArbScreen(
         AutoRejection_Content(
             items,
             calculate = viewModel::calculate,
+            reset = viewModel::reset
         )
     }
 }
@@ -66,7 +68,7 @@ fun AutoRejectionPage(
 ) {
     val items by viewModel.allItems.collectAsState()
     PageContent(title = "Auto Rejection (ARA & ARB)") {
-        AutoRejection_Content(items, calculate = viewModel::calculate,)
+        AutoRejection_Content(items, calculate = viewModel::calculate, reset = viewModel::reset)
     }
 }
 
@@ -74,6 +76,7 @@ fun AutoRejectionPage(
 fun AutoRejection_Content(
     list: List<AutoRejection>,
     calculate: (Int) -> Unit,
+    reset: () -> Unit,
 ) {
     var price: Int? by remember { mutableStateOf(0) }
     val enableButton by remember(price) { mutableStateOf(
@@ -96,6 +99,7 @@ fun AutoRejection_Content(
                     onValueChange = {
                         price = it.onlyInt()
                     },
+                    textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
             }
@@ -103,11 +107,15 @@ fun AutoRejection_Content(
         }
 
         item {
-            Button(
-                modifier = Modifier.fillMaxWidth(),
+            ButtonAndClear(
+                title = "Calculate",
                 onClick = { calculate.invoke(price?:0) },
-                enabled = enableButton
-            ) { Text(text = "Calculate") }
+                enableButton = enableButton,
+                onClickIcon = {
+                    price = 0
+                    reset.invoke()
+                }
+            )
             VSpacer()
         }
 
@@ -153,22 +161,22 @@ private fun AraItem(data: AutoRejection) {
             Row(
                 modifier = Modifier.weight(2f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Container(weight = 1f) {
+                Container(weight = 1.2f) {
                     Text(text = "ARA ${data.index}", style = MaterialTheme.typography.labelLarge)
-                    Text(text = "Rp ${data.price}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    Text(text = data.price.rupiah(true, false), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
                 HSpacer(2.dp)
-                Text(text = "+${data.increase}", modifier = Modifier.weight(1f), color = colorAra)
+                Text(text = "+${data.increase}", modifier = Modifier.weight(1.2f), color = colorAra)
             }
             HSpacer(2.dp)
-            Container(weight = 1.5f) {
+            Container(weight = 1.4f) {
                 Text(text = "Percentage", style = MaterialTheme.typography.labelSmall)
                 Text(text = "${data.percentage.percentFormat()}%", style = MaterialTheme.typography.bodyMedium, color = colorAra)
             }
             HSpacer(2.dp)
-            Container(weight = 1.5f) {
+            Container(weight = 1.4f) {
                 Text(text = "Total Percentage", style = MaterialTheme.typography.labelSmall)
                 Text(text = "${data.totalPercentage.percentFormat()}%", style = MaterialTheme.typography.bodyMedium, color = colorAra)
             }
@@ -182,32 +190,34 @@ private fun EqualItem(data: Int) {
         shape = RoundedCornerShape(5.dp),
         border = BorderStroke(
             width = 1.dp,
-            color = Color.Green,
+            color = Color.Gray,
         ),
     ) {
         Row(modifier = Modifier
             .padding(horizontal = 10.dp)
-            .padding(bottom = 5.dp)) {
+            .padding(bottom = 5.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             VSpacer(4.dp)
             Row(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(2f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Container(weight = 1f) {
+                Container(weight = 1.2f) {
                     Text(text = "Price", style = MaterialTheme.typography.labelMedium)
-                    Text(text = "Rp $data", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    Text(text = data.rupiah(true, false), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
                 HSpacer(2.dp)
-                Text(text = "+0", modifier = Modifier.weight(1f))
+                Text(text = "+0", modifier = Modifier.weight(1.2f))
             }
             HSpacer(2.dp)
-            Container(weight = 1f) {
+            Container(weight = 1.4f) {
                 Text(text = "Percentage", style = MaterialTheme.typography.labelSmall)
                 Text(text = "0%", style = MaterialTheme.typography.bodyMedium, color = colorEqual)
             }
             HSpacer(2.dp)
-            Container(weight = 1.2f) {
+            Container(weight = 1.4f) {
                 Text(text = "Total Percentage", style = MaterialTheme.typography.labelSmall)
                 Text(text = "0%", style = MaterialTheme.typography.bodyMedium, color = colorEqual)
             }
@@ -234,21 +244,21 @@ private fun ArbItem(data: AutoRejection) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
             ) {
-                Container(weight = 1f) {
+                Container(weight = 1.2f) {
                     Text(text = "ARB ${abs(data.index)}", style = MaterialTheme.typography.labelMedium)
-                    Text(text = "Rp ${data.price}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    Text(text = data.price.rupiah(true, false), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
                 HSpacer(2.dp)
                 Text(text = "${data.increase}", modifier = Modifier.weight(1f), color = colorArb)
             }
             HSpacer(2.dp)
-            Container(weight = 1.5f) {
+            Container(weight = 1.4f) {
                 Text(text = "Percentage", style = MaterialTheme.typography.labelSmall)
                 Text(text = "${data.percentage.percentFormat()}%", style = MaterialTheme.typography.bodyMedium, color = colorArb)
             }
             "%.2f".format(data.totalPercentage)
             HSpacer(2.dp)
-            Container(weight = 1.5f) {
+            Container(weight = 1.4f) {
                 Text(text = "Total Percentage", style = MaterialTheme.typography.labelSmall)
                 Text(text = "${data.totalPercentage.percentFormat()}%", style = MaterialTheme.typography.bodyMedium, color = colorArb)
             }
@@ -261,6 +271,6 @@ private fun ArbItem(data: AutoRejection) {
 fun AraArbScreen_Preview() {
     val list = RejectionEngineImpl().calculate(102)
     MainContent("AraArbScreen_Preview") {
-        AutoRejection_Content(list = list, calculate = {})
+        AutoRejection_Content(list = list, calculate = {}, reset = {})
     }
 }

@@ -20,13 +20,32 @@ fun Int.fractionArb(): Float {
 
 fun Int.fraction(): Int {
     return when {
-        this < 50 -> 1
+        this < 200 -> 1
         this in 200..< 501 -> 2
         this in 500..< 2001 -> 5
         this in 2000..< 5001 -> 10
         this >= 5001 -> 25
         else -> 1
     }
+}
+
+fun Int.modFraction(up: Boolean = false): Int {
+    val fr = this.fraction()
+    val mod = this % fr
+    if (mod <= 0) return this
+    return if (up) this + fr - mod else this - mod
+}
+
+private fun Int.upFold0(): Int {
+    val fr = this.fraction()
+    val temp = (this % fr)
+    return if (temp > 0) this + fr - temp else this
+}
+
+private fun Int.downFold0(): Int {
+    val fr = this.fraction()
+    val temp = (this % fr)
+    return if (temp > 0) this - temp else this
 }
 
 fun Int.sheet() = this * 100

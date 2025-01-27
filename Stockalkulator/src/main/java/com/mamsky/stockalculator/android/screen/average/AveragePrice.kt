@@ -28,12 +28,14 @@ import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,50 +46,67 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.tactics.AverageDownPriceTabContent
-import com.mamsky.stockalculator.android.screen.tactics.FibonacciScreen
 import com.mamsky.stockalculator.android.screen.tactics.FibonacciTabContent
-import com.mamsky.stockalculator.android.screen.tactics.MartingaleScreen
+import com.mamsky.stockalculator.android.screen.tactics.MartingaleContent
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.ButtonIcon
 import com.mamsky.stockalculator.android.shared.Container
 import com.mamsky.stockalculator.android.shared.HSpacer
-import com.mamsky.stockalculator.android.shared.InputField
+import com.mamsky.stockalculator.android.shared.InputField3
 import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
 import com.mamsky.stockalculator.data.AverageItem
 import com.mamsky.stockalculator.data.BuyItemModel
 import com.mamsky.stockalculator.data.InputModel
+import com.mamsky.stockalculator.utils.asString
 import com.mamsky.stockalculator.utils.currency
+import com.mamsky.stockalculator.utils.downFold
+import com.mamsky.stockalculator.utils.downFold0
 import com.mamsky.stockalculator.utils.intOrNull
 import com.mamsky.stockalculator.utils.isZeroOrNull
 import com.mamsky.stockalculator.utils.rupiah
+import com.mamsky.stockalculator.utils.upFold
+import com.mamsky.stockalculator.utils.upFold0
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AveragePriceScreen2(
+fun AverageStrategyScreen2(
     navController: NavController = rememberNavController(),
 ) {
     var tabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("General", "Schema", "Fibonacci", "Martingale")
+    val tabs = listOf("Regular", "Fibonacci", "Martingale")
     val pagerState = rememberPagerState { tabs.size }
-    MainContent("Average Strategy") {
-        Column {
-            ScrollableTabRow(modifier = Modifier.fillMaxWidth(), selectedTabIndex = tabIndex) {
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }.collect { page ->
+            println("AverageStrategy page $page")
+            tabIndex = page
+            pagerState.scrollToPage(page)
+        }
+    }
+
+    MainContent("Average Strategy", onBack = navController::popBackStack) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            ScrollableTabRow(
+                modifier = Modifier.fillMaxWidth(),
+                edgePadding = 8.dp,
+//                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                selectedTabIndex = tabIndex
+            ) {
                 tabs.forEachIndexed { index, title ->
-                    Tab(text = { Text(title) },
+                    Tab(
+                        text = { Text(title) },
                         selected = tabIndex == index,
                         onClick = { tabIndex = index }
                     )
                 }
             }
-
             HorizontalPager(state = pagerState) {
                 when (tabIndex) {
-                    0 -> AveragePriceTabContent()
-                    1 -> AverageDownPriceTabContent(navController)
-                    2 -> FibonacciTabContent(navController)
-                    3 -> MartingaleScreen(navController)
+                    0 -> AverageDownPriceTabContent(navController)
+                    1 -> FibonacciTabContent(navController)
+                    2 -> MartingaleContent(navController)
                 }
             }
         }
@@ -127,7 +146,6 @@ fun AveragePriceTabContent(
         onRemove = viewModel::remove
     )
 }
-
 
 @Composable
 fun AveragePricePage(
@@ -170,18 +188,35 @@ fun AveragePrice_Content(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                InputField(
+                InputField3(
                     modifier = Modifier.weight(1f),
                     label = "Price", value = buyPrice.orEmpty(), onValueChange = {
                         buyPrice = it
+                    },
+                    usePrefix = true,
+                    useUpDown = true,
+                    up = {
+                        val v = buyPrice.intOrNull() ?: 0
+                        buyPrice = v.upFold0().asString()
+                    },
+                    down = {
+                        val v = buyPrice.intOrNull() ?: 0
+                        buyPrice = v.downFold0().asString()
                     },
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
                 Spacer(modifier = Modifier.width(10.dp))
-                InputField(
+                InputField3(
                     usePrefix = false,
                     modifier = Modifier.weight(1f),
+                    useUpDown = true,
+                    up = {
+                        lot = lot?.toIntOrNull().upFold().toString()
+                    },
+                    down = {
+                        lot = lot?.toIntOrNull().downFold().toString()
+                    },
                     textStyle = MaterialTheme.typography.bodyMedium,
                     label = "Lot", value = lot.orEmpty(), onValueChange = {
                         lot = it
@@ -334,7 +369,14 @@ private fun AveragePrice_Preview() {
         BuyItemModel(1, 20, 10),
         BuyItemModel(1, 30, 100)
     )
+    (10).upFold()
     MainContent("AveragePrice_Preview") {
         AveragePrice_Content(list = list, onCalculate = {}, onClear = {}, onRemove = {})
     }
+}
+
+@Preview(showSystemUi = true, showBackground = true)
+@Composable
+private fun AveragePrice2_Preview() {
+    AverageStrategyScreen2()
 }

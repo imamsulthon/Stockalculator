@@ -1,5 +1,6 @@
 package com.mamsky.stockalculator.utils
 
+import com.mamsky.stockalculator.domain.fraction
 import com.mamsky.stockalculator.domain.sheet
 import java.text.NumberFormat
 import java.util.Locale
@@ -18,11 +19,24 @@ fun Int?.upFold(f: Int = 1, limit: Int? = null): Int {
     return test
 }
 
+fun Int?.upFold0(): Int {
+    val fr = this?.fraction() ?: 1
+    val temp = (this?:0) % fr
+    return if (temp > 0) this.upFold(fr - temp) else this.upFold(this?.fraction() ?: 1)
+}
+
 fun Int?.downFold(f: Int = 1, limit: Int? = 0): Int {
     if (this == null) return this ?: 0
     val test = this - f
     if (limit != null && this <= limit) return this
     return test
+}
+
+fun Int?.downFold0(): Int {
+    val fr = this?.fraction() ?: 1
+    val temp = (this?:0) % fr
+    if (temp > 0) return this.downFold(temp)
+    return this.downFold(fr)
 }
 
 fun String.onlyInt(): Int? = if (this.isEmpty()) null else this.replace("[^0-9]".toRegex(), "").toInt()

@@ -145,6 +145,7 @@ private fun TradingReturn_Content(
                     label = "Buy Price", value = buyPrice.asString(), onValueChange = {
                         buyPrice = it.onlyInt()
                     },
+                    textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
                 Spacer(modifier = Modifier.width(10.dp))
@@ -153,6 +154,7 @@ private fun TradingReturn_Content(
                     label = "Sell Price", value = sellPrice.asString(), onValueChange = {
                         sellPrice = it.onlyInt()
                     },
+                    textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
                 Spacer(modifier = Modifier.width(10.dp))
@@ -160,6 +162,7 @@ private fun TradingReturn_Content(
                     modifier = Modifier.weight(1f),
                     usePrefix = false,
                     useUpDown = true,
+                    textStyle = MaterialTheme.typography.bodyMedium,
                     up = {
                         lot = lot.orZero() + 1
                     },

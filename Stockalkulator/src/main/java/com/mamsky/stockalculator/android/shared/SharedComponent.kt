@@ -1,10 +1,19 @@
 package com.mamsky.stockalculator.android.shared
 
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -12,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -27,17 +37,25 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,6 +88,9 @@ fun InputField(
     value: String,
     onValueChange: (String) -> Unit,
     usePrefix: Boolean = true,
+    prefix: String = "Rp ",
+    enabled: Boolean = true,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardType: KeyboardType = KeyboardType.Number,
     imeAction: ImeAction = ImeAction.Done,
     textStyle: TextStyle = MaterialTheme.typography.labelSmall,
@@ -78,16 +99,18 @@ fun InputField(
         modifier = modifier,
         textStyle = textStyle,
         label = {
-            Text(text = label)
+            Text(text = label, fontSize = 12.sp)
         },
         prefix = {
-            if (usePrefix) Text(text = "Rp ", style = MaterialTheme.typography.labelSmall)
+            if (usePrefix) Text(text = prefix, style = MaterialTheme.typography.labelSmall)
         },
+        enabled = enabled,
         value = value, onValueChange = onValueChange::invoke,
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboardType,
             imeAction = imeAction
         ),
+        visualTransformation = visualTransformation
     )
 }
 
@@ -110,7 +133,7 @@ fun InputField2(
         modifier = modifier,
         textStyle = textStyle,
         label = {
-            Text(text = label, fontSize = 9.sp)
+            Text(text = label, fontSize = 12.sp)
         },
         prefix = {
             if (usePrefix) Text(text = "Rp ", style = MaterialTheme.typography.labelSmall)
@@ -149,10 +172,11 @@ fun InputField3(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
+    useUpDown: Boolean = false,
     up: (() -> Unit)? = null,
     down: (() -> Unit)? = null,
     usePrefix: Boolean = true,
-    useUpDown: Boolean = false,
+    prefix: String = "Rp ",
     keyboardType: KeyboardType = KeyboardType.Number,
     imeAction: ImeAction = ImeAction.Done,
     textStyle: TextStyle = MaterialTheme.typography.labelSmall,
@@ -162,25 +186,80 @@ fun InputField3(
         modifier = modifier,
         textStyle = textStyle,
         label = {
-            Text(text = label)
+            Text(text = label, fontSize = 11.sp)
         },
         prefix = {
-            if (usePrefix) Text(text = "Rp ",)
+            if (usePrefix) Text(text = prefix)
         },
         leadingIcon = {
-            IconButton(
-                modifier = Modifier.size(iconSize),
-                onClick = { down?.invoke() }
-            ) {
-                Icon(painter = painterResource(R.drawable.ic_remove), contentDescription = null)
-            }
+            if (useUpDown)
+                IconButton(
+                    modifier = Modifier.size(iconSize),
+                    onClick = { down?.invoke() }
+                ) {
+                    Icon(painter = painterResource(R.drawable.ic_remove), contentDescription = null)
+                }
         },
         trailingIcon = {
+            if (useUpDown)
             IconButton(
                 modifier = Modifier.size(iconSize),
                 onClick = { up?.invoke() }
             ) {
                 Icon(Icons.Filled.Add, contentDescription = null)
+            }
+        },
+        value = value,
+        onValueChange = onValueChange::invoke,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = imeAction
+        ),
+    )
+}
+
+@Composable
+fun InputFieldDropDown(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    onClickIcon: (() -> Unit)? = null,
+    usePrefix: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Number,
+    imeAction: ImeAction = ImeAction.Done,
+    textStyle: TextStyle = MaterialTheme.typography.labelSmall,
+    iconSize: Dp = 32.dp
+) {
+    OutlinedTextField(
+        modifier = modifier.clickable { onClickIcon?.invoke() },
+        textStyle = textStyle,
+        readOnly = true,
+        enabled = false,
+        colors = OutlinedTextFieldDefaults.colors(
+            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+            disabledContainerColor = Color.Transparent,
+            disabledBorderColor = MaterialTheme.colorScheme.outline,
+            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurface,
+            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledSupportingTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledPrefixColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledSuffixColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        label = {
+            Text(text = label, fontSize = 12.sp)
+        },
+        prefix = {
+            if (usePrefix) Text(text = "Rp ",)
+        },
+        trailingIcon = {
+            IconButton(
+                modifier = Modifier.size(iconSize),
+                onClick = { onClickIcon?.invoke() }
+            ) {
+                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null)
             }
         },
         value = value,
@@ -254,12 +333,13 @@ fun ButtonAndClear(
     title: String,
     onClick: () -> Unit,
     onClickIcon: () -> Unit,
+    modifier: Modifier = Modifier,
     enableButton: Boolean = true,
     enableIcon: Boolean = true,
     icon: ImageVector = Icons.Outlined.Delete
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Button(
@@ -277,4 +357,56 @@ fun ButtonAndClear(
             Icon(imageVector = icon, contentDescription = null)
         }
     }
+}
+
+@Composable
+fun CustomSwitchButton(
+    switchPadding: Dp,
+    buttonWidth: Dp,
+    buttonHeight: Dp,
+    value: Boolean
+) {
+    val switchSize by remember { mutableStateOf(buttonHeight-switchPadding*2) }
+    val interactionSource = remember { MutableInteractionSource() }
+    var switchClicked by remember { mutableStateOf(value) }
+    var padding by remember { mutableStateOf(0.dp) }
+
+    padding = if (switchClicked) buttonWidth-switchSize-switchPadding*2 else 0.dp
+
+    val animateSize by animateDpAsState(
+        targetValue = if (switchClicked) padding else 0.dp,
+        tween(
+            durationMillis = 700,
+            delayMillis = 0,
+            easing = LinearOutSlowInEasing
+        ), label = ""
+    )
+
+    Box(
+        modifier = Modifier
+            .width(buttonWidth)
+            .height(buttonHeight)
+            .clip(CircleShape)
+            .background(if (switchClicked) Color.Blue else Color.LightGray)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) {
+                switchClicked = !switchClicked
+            }
+    ) {
+        Row(modifier = Modifier.fillMaxSize().padding(switchPadding)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(animateSize)
+                    .background(Color.Transparent)
+            )
+            Box(modifier = Modifier
+                .size(switchSize)
+                .clip(CircleShape)
+                .background(Color.White))
+        }
+    }
+
 }

@@ -59,6 +59,13 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
 
     implementation(libs.timber)
+//    implementation(libs.compose.chart)
+//    implementation(libs.co.yml.chart)
+//    implementation(libs.vico.compose)
+//    implementation(libs.vico.compose.m2)
+//    implementation(libs.vico.compose.m3)
+//    implementation(libs.vico.core)
+//    implementation(libs.vico.views)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
