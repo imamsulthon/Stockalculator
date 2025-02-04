@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,7 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,9 +32,9 @@ import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.InputFieldDropDown
 import com.mamsky.stockalculator.android.shared.MainContent
+import com.mamsky.stockalculator.android.shared.ThousandSeparatorTransform
 import com.mamsky.stockalculator.android.shared.VSpacer
-import com.mamsky.stockalculator.android.shared.rememberCurrencyVisualTransformation
-import com.mamsky.stockalculator.utils.asString
+import com.mamsky.stockalculator.android.shared.formatWithComma
 
 @Composable
 fun CreateStockScreen(
@@ -42,12 +42,12 @@ fun CreateStockScreen(
     viewModel: CreateStockVM = hiltViewModel()
 ) {
     val fieldModel by viewModel.fieldModel.collectAsState()
+    
     Content(
         navController = navController,
         model = fieldModel,
         event = viewModel::events
     )
-
 }
 
 @Composable
@@ -59,18 +59,24 @@ private fun Content(
 
     var showModalSector by remember { mutableStateOf(false) }
     var showModalSubSector by remember { mutableStateOf(false) }
-    val perXPbv by remember(model.eps, model.bookValue) {
-        mutableFloatStateOf(model.eps * model.bookValue)
+    val perXPbv: String? by remember(model.eps, model.bookValue) {
+        mutableStateOf(model.perXPbv().formatWithComma())
     }
 
-    MainContent(title = "Create Stock",
+    val enabledButton by remember(model.code, model.currentPrice, model.eps, model.bookValue) {
+        mutableStateOf(model.code.isNotEmpty() && model.currentPrice != null && model.eps != null && model.bookValue != null)
+    }
+
+    MainContent(
+        title = "Create Stock",
         bottomContent = {
             ButtonAndClear(modifier = Modifier.fillMaxWidth().padding(10.dp),
-                title = "Save",
-                onClick = {event.invoke(CreateStockEvent.Save)},
-                onClickIcon = {event.invoke(CreateStockEvent.Clear)}
+                title = "Save", enableButton = enabledButton,
+                onClick = { event.invoke(CreateStockEvent.Save) },
+                onClickIcon = { event.invoke(CreateStockEvent.Clear) }
             )
-        }, onBack = navController::popBackStack
+        },
+        onBack = navController::popBackStack
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             LazyColumn(modifier = Modifier.padding(10.dp)) {
@@ -83,8 +89,9 @@ private fun Content(
                         onValueChange = {
                             event.invoke(CreateStockEvent.Code(it))
                         },
+                        imeAction = ImeAction.Next,
                         textStyle = MaterialTheme.typography.bodyLarge,
-                        keyboardType = KeyboardType.Text
+                        keyboardType = KeyboardType.Number,
                     )
                     VSpacer(5.dp)
                     InputField(
@@ -96,7 +103,21 @@ private fun Content(
                         onValueChange = {
                             event.invoke(CreateStockEvent.CompanyName(it))
                         },
-                        keyboardType = KeyboardType.Text
+                        imeAction = ImeAction.Next,
+                        keyboardType = KeyboardType.Decimal,
+                    )
+                    VSpacer(5.dp)
+                    InputField(
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp, max = 240.dp),
+                        label = "Description",
+                        usePrefix = false,
+                        value = model.description.orEmpty(),
+                        textStyle = MaterialTheme.typography.bodySmall,
+                        onValueChange = {
+                            event.invoke(CreateStockEvent.Description(it))
+                        },
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
                     )
                     VSpacer(5.dp)
                     InputFieldDropDown(
@@ -104,7 +125,7 @@ private fun Content(
                         label =  "Sector",
                         onValueChange = {},
                         usePrefix = false,
-                        value = model.sector,
+                        value = model.sector.orEmpty(),
                         textStyle = MaterialTheme.typography.bodySmall,
                         onClickIcon = {
                             showModalSector = true
@@ -116,7 +137,7 @@ private fun Content(
                         label =  "Sub Sector",
                         onValueChange = {},
                         usePrefix = false,
-                        value = model.subSector,
+                        value = model.subSector.orEmpty(),
                         textStyle = MaterialTheme.typography.bodySmall,
                         onClickIcon = {
                             showModalSubSector = true
@@ -126,12 +147,14 @@ private fun Content(
                     InputField(
                         modifier = Modifier.fillMaxWidth(),
                         label = "Current Price",
-                        value = model.currentPrice.asString(),
+                        value = model.currentPrice.orEmpty(),
                         textStyle = MaterialTheme.typography.bodyMedium,
                         onValueChange = {
-                            event.invoke(CreateStockEvent.CurrentPrice(it.toFloat()))
+                            event.invoke(CreateStockEvent.CurrentPrice(it))
                         },
-                        keyboardType = KeyboardType.Number
+                        visualTransformation = ThousandSeparatorTransform(),
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
                     )
 
                     VSpacer(15.dp)
@@ -141,25 +164,29 @@ private fun Content(
                         InputField(
                             modifier = Modifier.weight(1f),
                             label = "Earning Per Share",
-                            value = model.per.asString(),
+                            value = model.eps.orEmpty(),
                             onValueChange = {
-                                event.invoke(CreateStockEvent.EPS(it.toFloat()))
+                                event.invoke(CreateStockEvent.EPS(it))
                             },
                             usePrefix = false,
                             textStyle = MaterialTheme.typography.bodyMedium,
                             keyboardType = KeyboardType.Decimal,
-                            visualTransformation = rememberCurrencyVisualTransformation()
+                            imeAction = ImeAction.Next,
+                            visualTransformation = ThousandSeparatorTransform()
                         )
-                        HSpacer(5.dp)
+                        HSpacer(6.dp)
+
                         InputField(
                             modifier = Modifier.weight(1f),
                             label = "Book Value Per Share",
-                            value = model.bookValue.asString(),
+                            value = model.bookValue.orEmpty(),
                             textStyle = MaterialTheme.typography.bodyMedium,
                             onValueChange = {
-                                event.invoke(CreateStockEvent.BookValue(it.toFloat()))
+                                event.invoke(CreateStockEvent.BookValue(it))
                             },
                             usePrefix = false,
+                            imeAction = ImeAction.Next,
+                            visualTransformation = ThousandSeparatorTransform(),
                             keyboardType = KeyboardType.Decimal
                         )
                     }
@@ -173,25 +200,23 @@ private fun Content(
                         InputField4(
                             modifier = Modifier.weight(1f),
                             label = "PER",
-                            value = model.per.asString(),
+                            value = model.per.orEmpty(),
                             supportingText = {
                                 Text(text = "Price to Earning Ratio")
                             },
                             onValueChange = {},
                             enabled = false,
-                            keyboardType = KeyboardType.Text
                         )
-                        HSpacer(5.dp)
+                        HSpacer(6.dp)
                         InputField4(
                             modifier = Modifier.weight(1f),
                             label = "PBV",
-                            value = model.pbv.asString(),
+                            value = model.pbv.orEmpty(),
                             enabled = false,
                             supportingText = {
                                 Text(text = "Price to Book Value")
                             },
                             onValueChange = {},
-                            keyboardType = KeyboardType.Text
                         )
                     }
                     VSpacer(5.dp)
@@ -199,40 +224,78 @@ private fun Content(
                         InputField4(
                             modifier = Modifier.weight(1f),
                             label = "PER x PBV",
-                            value = perXPbv.asString(),
+                            value = perXPbv.orEmpty(),
                             onValueChange = {},
                             enabled = false,
-                            keyboardType = KeyboardType.Text
-                        )
-                        HSpacer(5.dp)
-                        InputField4(
-                            modifier = Modifier.weight(1f),
-                            label = "Return on Equity",
-                            value = "",
-                            onValueChange = {},
-                            enabled = false,
-                            keyboardType = KeyboardType.Text
                         )
                     }
-
                     VSpacer(5.dp)
                 }
 
                 item {
+                    VSpacer(15.dp)
+                    Text(text = "Profitability", style = MaterialTheme.typography.titleSmall)
+                    VSpacer(5.dp)
+                    Row {
+                        InputField(
+                            modifier = Modifier.weight(1f),
+                            label = "Return on Asset",
+                            value = model.roa.orEmpty(),
+                            onValueChange = {
+                                event.invoke(CreateStockEvent.ROA(it))
+                            },
+                            usePrefix = false,
+                            imeAction = ImeAction.Next,
+                            visualTransformation = ThousandSeparatorTransform(),
+                            keyboardType = KeyboardType.Decimal
+                        )
+                        HSpacer(6.dp)
+                        InputField(
+                            modifier = Modifier.weight(1f),
+                            label = "Return on Equity",
+                            value = model.roe.orEmpty(),
+                            onValueChange = {
+                                event.invoke(CreateStockEvent.ROE(it))
+                            },
+                            usePrefix = false,
+                            imeAction = ImeAction.Next,
+                            visualTransformation = ThousandSeparatorTransform(),
+                            keyboardType = KeyboardType.Decimal
+                        )
+                    }
+                }
 
+                item {
+                    VSpacer(15.dp)
+                    Text(text = "Solvency", style = MaterialTheme.typography.titleSmall)
+                    VSpacer(5.dp)
+                    InputField(
+                        modifier = Modifier.weight(1f),
+                        label = "Debt to Equity Ratio",
+                        value = model.der.orEmpty(),
+                        onValueChange = {
+                            event.invoke(CreateStockEvent.DER(it))
+                        },
+                        imeAction = ImeAction.Done,
+                        visualTransformation = ThousandSeparatorTransform(),
+                        keyboardType = KeyboardType.Decimal
+                    )
                 }
             }
         }
     }
 
-    SectorModalAll(showModalSector, model.sector, onDismiss = { showModalSector = false }) { key, label ->
+    SectorModalAll(showModalSector, model.sector.orEmpty(),
+        onDismiss = { showModalSector = false }
+    ) { key, _ ->
         event.invoke(CreateStockEvent.Sector(key))
     }
 
     SectorModalSub(showModalSubSector,
-        parentKey = model.sector, selectedId = model.subSector,
+        parentKey = model.sector.orEmpty(),
+        selectedId = model.subSector.orEmpty(),
         onDismiss = { showModalSubSector = false }
-    ) { key, label ->
+    ) { key, _ ->
         event.invoke(CreateStockEvent.SubSector(key))
     }
 
@@ -279,7 +342,7 @@ private fun Preview() {
     Content(
         rememberNavController(),
         event = {},
-        model = StockModel("abcd", "PT Bukit Asam", "Energi dan Gas",
-            "Gas", 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)
+        model = StockModel("abcd", "","PT Bukit Asam", "Energi dan Gas",
+            "Gas", currentPrice = "100.0", bookValue = "0.1", eps = "0.2")
     )
 }

@@ -11,7 +11,7 @@ import com.mamsky.stockalculator.android.screen.average.AverageStrategyScreen2
 import com.mamsky.stockalculator.android.screen.draft.CreateStockScreen
 import com.mamsky.stockalculator.android.screen.draft.MyStocksScreen
 import com.mamsky.stockalculator.android.screen.profit.ProfitPerTickScreen
-import com.mamsky.stockalculator.android.screen.tactics.ProfitStrategyScreen
+import com.mamsky.stockalculator.android.screen.profit.ProfitStrategyScreen
 import com.mamsky.stockalculator.android.screen.trading.TradingReturnScreen
 
 

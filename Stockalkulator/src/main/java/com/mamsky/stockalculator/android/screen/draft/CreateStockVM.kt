@@ -8,10 +8,11 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
-class CreateStockVM @Inject constructor(): ViewModel() {
+class CreateStockVM @Inject constructor(
 
-    private val _fieldModel = MutableStateFlow(StockModel("", "", "", "",
-        0.0f, 0.0f,0.0f,0.0f, 0.0f))
+): ViewModel() {
+
+    private val _fieldModel = MutableStateFlow(StockModel("", "", null))
     val fieldModel = _fieldModel.asStateFlow()
 
     fun events(event: CreateStockEvent) {
@@ -27,6 +28,9 @@ class CreateStockVM @Inject constructor(): ViewModel() {
             }
             is CreateStockEvent.SubSector -> {
                 _fieldModel.value = _fieldModel.value.copy(subSector = event.v)
+            }
+            is CreateStockEvent.Description -> {
+                _fieldModel.value = _fieldModel.value.copy(description = event.v)
             }
             is CreateStockEvent.CurrentPrice -> {
                 _fieldModel.value = _fieldModel.value.copy(currentPrice = event.v)
@@ -46,23 +50,43 @@ class CreateStockVM @Inject constructor(): ViewModel() {
             is CreateStockEvent.PBV -> {
                 _fieldModel.value = _fieldModel.value.copy(pbv = event.v)
             }
-            is CreateStockEvent.Save -> {}
-            is CreateStockEvent.Clear -> {}
+            is CreateStockEvent.ROA -> {
+                _fieldModel.value = _fieldModel.value.copy(roa = event.v)
+            }
+            is CreateStockEvent.ROE -> {
+                _fieldModel.value = _fieldModel.value.copy(roe = event.v)
+            }
+            is CreateStockEvent.DER -> {
+                _fieldModel.value = _fieldModel.value.copy(der = event.v)
+            }
+            is CreateStockEvent.Save -> {
+                save()
+            }
+            is CreateStockEvent.Clear -> {
+                _fieldModel.value = StockModel("", "", null)
+            }
         }
     }
 
+    private fun save() {
+        TODO("Not yet implemented")
+    }
+
     private fun calculate() {
-        val price = _fieldModel.value.currentPrice
+        val price = _fieldModel.value.currentPrice?.toDouble() ?: return
         price.setPbv()
         price.per()
     }
 
-    private fun Float.per() {
-        _fieldModel.update { it.copy(per = this * it.eps) }
+    private fun Double.per() {
+        val eps = _fieldModel.value.eps?.toDoubleOrNull() ?: return
+        _fieldModel.update { it.copy(per = (this / eps).toString()) }
     }
 
-    private fun Float.setPbv() {
-        _fieldModel.update { it.copy(pbv = this * it.bookValue) }
+    private fun Double.setPbv() {
+        val bvps = _fieldModel.value.bookValue?.toDoubleOrNull() ?: return
+        val pbv = this / bvps
+        _fieldModel.update { it.copy(pbv = pbv.toString()) }
     }
 
 }
@@ -70,13 +94,17 @@ class CreateStockVM @Inject constructor(): ViewModel() {
 sealed class CreateStockEvent {
     data class Code(val v: String) : CreateStockEvent()
     data class CompanyName(val v: String) : CreateStockEvent()
+    data class Description(val v: String) : CreateStockEvent()
     data class Sector(val v: String) : CreateStockEvent()
     data class SubSector(val v: String) : CreateStockEvent()
-    data class CurrentPrice(val v: Float) : CreateStockEvent()
-    data class EPS(val v: Float) : CreateStockEvent()
-    data class BookValue(val v: Float) : CreateStockEvent()
-    data class PER(val v: Float) : CreateStockEvent()
-    data class PBV(val v: Float) : CreateStockEvent()
+    data class CurrentPrice(val v: String) : CreateStockEvent()
+    data class EPS(val v: String) : CreateStockEvent()
+    data class BookValue(val v: String) : CreateStockEvent()
+    data class PER(val v: String) : CreateStockEvent()
+    data class PBV(val v: String) : CreateStockEvent()
+    data class ROE(val v: String): CreateStockEvent()
+    data class ROA(val v: String): CreateStockEvent()
+    data class DER(val v: String): CreateStockEvent()
     object Save : CreateStockEvent()
     object Clear: CreateStockEvent()
 }

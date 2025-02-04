@@ -177,6 +177,7 @@ fun InputField3(
     down: (() -> Unit)? = null,
     usePrefix: Boolean = true,
     prefix: String = "Rp ",
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardType: KeyboardType = KeyboardType.Number,
     imeAction: ImeAction = ImeAction.Done,
     textStyle: TextStyle = MaterialTheme.typography.labelSmall,
@@ -211,6 +212,7 @@ fun InputField3(
         },
         value = value,
         onValueChange = onValueChange::invoke,
+        visualTransformation = visualTransformation,
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboardType,
             imeAction = imeAction
@@ -355,6 +357,37 @@ fun ButtonAndClear(
             enabled = enableIcon
         ) {
             Icon(imageVector = icon, contentDescription = null)
+        }
+    }
+}
+
+@Composable
+fun ButtonAndClear2(
+    title: String,
+    onClick: () -> Unit,
+    onClickIcon: () -> Unit,
+    modifier: Modifier = Modifier,
+    enableButton: Boolean = true,
+    enableIcon: Boolean = true,
+    icon: ImageVector = Icons.Outlined.Delete
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        OutlinedIconButton(
+            modifier = Modifier.wrapContentSize(),
+            onClick = onClickIcon::invoke,
+            enabled = enableIcon
+        ) {
+            Icon(imageVector = icon, contentDescription = null)
+        }
+        HSpacer(10.dp)
+        Button(
+            modifier = Modifier.fillMaxWidth(0.85f),
+            onClick = onClick::invoke, enabled = enableButton
+        ) {
+            Text(text = title, color = Color.White)
         }
     }
 }

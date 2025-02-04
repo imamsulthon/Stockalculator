@@ -11,13 +11,10 @@ import androidx.compose.material.Text
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,8 +27,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
+import com.mamsky.stockalculator.android.screen.fee.ChangeFeeModal
 import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee3
+import com.mamsky.stockalculator.android.screen.fee.rememberBuyFeeDefault
 import com.mamsky.stockalculator.android.screen.profit.ProfitPerTick
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.HSpacer
@@ -104,8 +102,8 @@ private fun Content(
     onClear: () -> Unit,
     onCalculate: (AverageItem, Int, Int, Int, Int, Int, Int, Float, Boolean, Boolean) -> Unit,
 ) {
-    var initLot: Int? by remember { mutableStateOf(0) }
-    var initAveragePrice: Int? by remember { mutableStateOf(0) }
+    var initLot: Int? by remember { mutableStateOf(null) }
+    var initAveragePrice: Int? by remember { mutableStateOf(null) }
     val initInvested: Int? by remember(initLot, initAveragePrice) {
         mutableIntStateOf(initLot.orZero().sheet() * initAveragePrice.orZero())
     }
@@ -113,14 +111,21 @@ private fun Content(
     var endPrice: Int? by remember { mutableStateOf(null) }
     var foldPrice: Int? by remember { mutableStateOf(1) }
     var startLot: Int? by remember { mutableStateOf(1) }
-    var endLot: Int? by remember { mutableStateOf(null) }
+    var endLot: Int? by remember { mutableStateOf(10) }
     var lotFactor: Int? by remember { mutableStateOf(1) }
     var revertLot by remember { mutableStateOf(false) }
-    var buyingUptrend by remember { mutableStateOf(false) }
+    val (buyingUptrend, selected) = remember { mutableIntStateOf(0) }
 
     var useBroker by remember { mutableStateOf(false) }
     var showFeeDialog by remember { mutableStateOf(false) }
-    var buyFee by remember { mutableFloatStateOf(0f) }
+    var buyFee by rememberBuyFeeDefault()
+
+    val enabledButton by remember(initAveragePrice, initLot, startPrice, endPrice, foldPrice, startLot, endLot, lotFactor) {
+        mutableStateOf(initAveragePrice != null && initLot != null && startPrice != null
+                && endPrice != null && foldPrice != null && lotFactor != null
+                && startLot != null && endLot != null
+        )
+    }
 
     LazyColumn(modifier = Modifier.padding(10.dp)) {
         item {
@@ -141,16 +146,10 @@ private fun Content(
                     label = "Lot",
                     usePrefix = false,
                     useUpDown = true,
-                    up = {
-                        initLot = initLot.upFold()
-                    },
-                    down = {
-                        initLot = initLot.downFold()
-                    },
+                    up = { initLot = initLot.upFold() },
+                    down = { initLot = initLot.downFold() },
                     value = initLot.asString(),
-                    onValueChange = {
-                        initLot = it.onlyInt()
-                    },
+                    onValueChange = { initLot = it.onlyInt() },
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
@@ -169,19 +168,12 @@ private fun Content(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Buying on Downtrend Prices", style = MaterialTheme.typography.titleSmall)
+                Text(text = "Buying on", style = MaterialTheme.typography.titleSmall)
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Uptrend")
                     HSpacer(5.dp)
-                    Switch(
-                        modifier = Modifier.padding(end = 6.dp),
-                        checked = buyingUptrend,
-                        onCheckedChange = {
-                            buyingUptrend = it
-                        }
-                    )
+                    TrendOption(selectedItemIndex = buyingUptrend, onChange = selected)
                 }
             }
             Row(modifier = Modifier.padding(vertical = 5.dp)) {
@@ -189,9 +181,7 @@ private fun Content(
                     modifier = Modifier.weight(1f).padding(end = 5.dp),
                     label = "Start Price",
                     value = startPrice.asString(),
-                    onValueChange = {
-                        startPrice = it.onlyInt()
-                    },
+                    onValueChange = { startPrice = it.onlyInt() },
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
@@ -199,9 +189,7 @@ private fun Content(
                     modifier = Modifier.weight(1f).padding(end = 5.dp),
                     label = "End Price",
                     value = endPrice.asString(),
-                    onValueChange = {
-                        endPrice = it.onlyInt()
-                    },
+                    onValueChange = { endPrice = it.onlyInt() },
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
@@ -210,16 +198,10 @@ private fun Content(
                     label = "Price Factor",
                     usePrefix = false,
                     useUpDown = true,
-                    up = {
-                        foldPrice = foldPrice.upFold()
-                    },
-                    down = {
-                        foldPrice = foldPrice.downFold()
-                    },
+                    up = { foldPrice = foldPrice.upFold() },
+                    down = { foldPrice = foldPrice.downFold() },
                     value = foldPrice.asString(),
-                    onValueChange = {
-                        foldPrice = it.onlyInt()
-                    },
+                    onValueChange = { foldPrice = it.onlyInt() },
                     textStyle = MaterialTheme.typography.bodySmall,
                     imeAction = ImeAction.Next
                 )
@@ -255,16 +237,10 @@ private fun Content(
                     label = "Lot Factor",
                     usePrefix = false,
                     useUpDown = true,
-                    up = {
-                        lotFactor = lotFactor.upFold()
-                    },
-                    down = {
-                        lotFactor = lotFactor.downFold()
-                    },
+                    up = { lotFactor = lotFactor.upFold() },
+                    down = { lotFactor = lotFactor.downFold() },
                     value = lotFactor.asString(),
-                    onValueChange = {
-                        lotFactor = it.onlyInt()
-                    },
+                    onValueChange = { lotFactor = it.onlyInt() },
                     textStyle = MaterialTheme.typography.bodySmall,
                     imeAction = ImeAction.Next
                 )
@@ -300,7 +276,7 @@ private fun Content(
         item {
             VSpacer(10.dp)
             ButtonAndClear(
-                title = "Exercise",
+                title = "Exercise", enableButton = enabledButton,
                 onClick = {
                     onCalculate.invoke(
                         AverageItem(initLot.orZero(), initAveragePrice.orZero().toFloat(), initInvested.orZero().toFloat()),
@@ -312,7 +288,7 @@ private fun Content(
                         lotFactor.orZero(),
                         buyFee,
                         revertLot,
-                        buyingUptrend,
+                        buyingUptrend == 1,
                     )
                 },
                 onClickIcon = {
@@ -368,16 +344,14 @@ private fun Content(
 
     }
 
-    if (showFeeDialog) {
-        ModalBottomSheet(
-            onDismissRequest = { showFeeDialog = false },
-            sheetState = rememberModalBottomSheetState()
-        ) {
-            ChangeFeeContent { buy, _ ->
-                buyFee = buy
-                showFeeDialog = false
-            }
-        }
+    ChangeFeeModal(
+        show = showFeeDialog,
+        buyFee = buyFee,
+        sellFee = 0f,
+        onDismiss = { showFeeDialog = false }
+    ) { buy, _ ->
+        buyFee = buy
+        showFeeDialog = false
     }
 }
 

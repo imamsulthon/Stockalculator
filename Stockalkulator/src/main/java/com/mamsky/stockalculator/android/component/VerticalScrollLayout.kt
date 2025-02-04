@@ -1,4 +1,4 @@
-package com.mamsky.stockalculator.android.screen
+package com.mamsky.stockalculator.android.component
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn

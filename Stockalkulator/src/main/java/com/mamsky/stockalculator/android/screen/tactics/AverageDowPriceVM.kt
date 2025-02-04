@@ -95,7 +95,7 @@ open class AverageDowPriceVM @Inject constructor(
         calculate()
     }
 
-    fun clear() {
+    open fun clear() {
         _allItems.clear()
         _initAverage.value = null
         _buyingAverage.value = null

@@ -1,6 +1,7 @@
 package com.mamsky.stockalculator.android.screen.trading
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.mamsky.stockalculator.data.InputModel
 import com.mamsky.stockalculator.data.ResultBuy
 import com.mamsky.stockalculator.data.ResultCalculation
@@ -8,13 +9,13 @@ import com.mamsky.stockalculator.data.ResultSell
 import com.mamsky.stockalculator.engine.priceBuy
 import com.mamsky.stockalculator.engine.priceFee
 import com.mamsky.stockalculator.engine.priceSell
-import com.mamsky.stockalculator.utils.percentFormat
 import com.mamsky.stockalculator.utils.percentOf
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -68,6 +69,14 @@ class TradingReturnVM @Inject constructor(): ViewModel() {
                 status = if (profit < 0f) "Loss" else "Profit",
                 percentPL = percentPL
             )
+        }
+    }
+
+    fun clear() {
+        viewModelScope.launch {
+            _buyData.update { ResultBuy() }
+            _sellData.update { ResultSell() }
+            _result.update { ResultCalculation() }
         }
     }
 

@@ -1,5 +1,6 @@
 package com.mamsky.stockalculator.android.screen.tactics
 
+import com.mamsky.stockalculator.android.screen.fee.ConstantFee
 import com.mamsky.stockalculator.android.screen.tactics.LotSequence.reverted
 import com.mamsky.stockalculator.data.AverageItem
 import com.mamsky.stockalculator.data.BuyItemModel
@@ -12,8 +13,7 @@ import javax.inject.Inject
 @HiltViewModel
 class FibonacciVM @Inject constructor(): AverageDowPriceVM() {
 
-
-    private val _avgModel = MutableStateFlow(AvgDownModel())
+    private val _avgModel = MutableStateFlow(AvgDownModel(fee = ConstantFee.BUY))
     val avgModel = _avgModel.asStateFlow()
 
     fun fibonacci(

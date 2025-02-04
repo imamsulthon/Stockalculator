@@ -80,7 +80,7 @@ fun ChangeFeeModal(
             onDismissRequest = { onDismiss.invoke() },
             sheetState = sheetState
         ) {
-            ChangeFeeContent(buyFee, sellFee) { buy, sell ->
+            ChangeFeeContent(buyFee, sellFee, onCancel = onDismiss::invoke) { buy, sell ->
                 onApply.invoke(buy, sell)
                 onDismiss.invoke()
             }
@@ -92,6 +92,7 @@ fun ChangeFeeModal(
 fun ChangeFeeContent(
     buy: Float? = ConstantFee.BUY,
     sell: Float? = ConstantFee.SELL,
+    onCancel: () -> Unit,
     onApply: (Float, Float) -> Unit
 ) {
     var buyFee: String? by remember { mutableStateOf(buy.asString()) }
@@ -137,7 +138,7 @@ fun ChangeFeeContent(
                     .padding(10.dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                OutlinedButton(onClick = { /*TODO*/ }) {
+                OutlinedButton(onClick = onCancel::invoke) {
                     Text(text = "Cancel")
                 }
                 Spacer(modifier = Modifier.width(10.dp))
@@ -294,8 +295,7 @@ fun ChangeFeeContent_Preview() {
         sheetState = rememberStandardBottomSheetState()
     ) {
         ChangeFeeContent(
-            onApply = { b, s ->
-            }
+            onApply = { _, _ -> }, onCancel = {}
         )
     }
 }

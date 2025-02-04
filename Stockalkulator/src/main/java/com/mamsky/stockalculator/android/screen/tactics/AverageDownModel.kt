@@ -11,7 +11,6 @@ data class AvgDownModel(
     var revertLot: Boolean = false,
 )
 
-
 sealed class AvgFormEvent {
     data class startPrice(val v: Int?) : AvgFormEvent()
     data class endPrice(val v: Int?) : AvgFormEvent()

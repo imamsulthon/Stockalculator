@@ -1,4 +1,4 @@
-package com.mamsky.stockalculator.android.screen.tactics
+package com.mamsky.stockalculator.android.screen.profit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,10 +14,6 @@ import javax.inject.Inject
 
 class ProfitStrategyVM @Inject constructor(): ViewModel() {
 
-    private val _buyItem1 = MutableStateFlow<AverageItem?>(null)
-    val buyItem1: StateFlow<AverageItem?> = _buyItem1.asStateFlow()
-    private val _buyItem2 = MutableStateFlow<AverageItem?>(null)
-    val buyItem2: StateFlow<AverageItem?> = _buyItem2.asStateFlow()
     private val _averageResult = MutableStateFlow<AverageItem?>(null)
     val averageResult: StateFlow<AverageItem?> = _averageResult.asStateFlow()
 
@@ -30,13 +26,17 @@ class ProfitStrategyVM @Inject constructor(): ViewModel() {
     private val _suggestSell2 = MutableStateFlow<AverageItem?>(null)
     val suggestSell2: StateFlow<AverageItem?> = _suggestSell2.asStateFlow()
 
-    fun calculate(buy1: AverageItem, buy2: AverageItem, fee: Float, targetProfit: Int) {
+    fun calculate(
+        buy1: AverageItem,
+        buy2: AverageItem,
+        buyFee: Float,
+        targetProfit: Int,
+        targetProfit2: Float? = null,
+    ) {
         viewModelScope.launch {
-            _buyItem1.value = buy1
-            _buyItem2.value = buy2
 
             val totalLot = buy1.lot + buy2.lot
-            val totalInvested = buy1.average.priceBuy(buy1.lot, fee) + buy2.average.priceBuy(buy2.lot, fee)
+            val totalInvested = buy1.average.priceBuy(buy1.lot, buyFee) + buy2.average.priceBuy(buy2.lot, buyFee)
             val avg = totalInvested/totalLot.sheet()
             _averageResult.value = AverageItem(
                 lot = totalLot,
@@ -44,39 +44,50 @@ class ProfitStrategyVM @Inject constructor(): ViewModel() {
                 value = totalInvested
             )
 
-            val tempValue = buy2.average.priceBuy(totalLot, fee)
+            val tempValue = buy2.average.priceBuy(totalLot, buyFee)
             _currentMktValue.value = AverageItem(
                 lot = totalLot,
                 average = buy2.average,
                 value = tempValue
             )
 
-            val suggestAvg = (totalInvested.toInt() + targetProfit)/totalLot.sheet()
-            _suggestSell.value = AverageItem(
-                lot = totalLot,
-                average = suggestAvg.toFloat(),
-                value = totalInvested + targetProfit,
-                pl = targetProfit.toFloat()
-            )
+            var suggestAvg: Int = 0
+            if (targetProfit2 == null) {
+                suggestAvg = (totalInvested.toInt() + targetProfit)/totalLot.sheet()
+                _suggestSell.value = AverageItem(
+                    lot = totalLot,
+                    average = suggestAvg.toFloat(),
+                    value = totalInvested + targetProfit,
+                    pl = targetProfit.toFloat()
+                )
+            } else {
+                val target = totalInvested + (totalInvested * (targetProfit2/100))
+                suggestAvg = (target/totalLot.sheet()).toInt()
+                _suggestSell.value = AverageItem(
+                    lot = totalLot,
+                    average = suggestAvg.toFloat(),
+                    value = target,
+                    pl = target - totalInvested
+                )
+            }
 
-            // round fraction price
+            // round fraction price, suggestion for target profit 1
             val suggestPrice2 = suggestAvg.modFraction()
-            if (suggestPrice2 == suggestAvg) return@launch
+            if (suggestPrice2 > 0) {
+                val totalValue2 = suggestPrice2.priceBuy(totalLot, buyFee)
+                _suggestSell2.value = AverageItem(
+                    lot = totalLot,
+                    average = suggestPrice2.toFloat(),
+                    value = totalValue2,
+                    pl = totalValue2 - totalInvested
+                )
+            }
 
-            val totalValue2 = suggestPrice2.priceBuy(totalLot, fee)
-            _suggestSell2.value = AverageItem(
-                lot = totalLot,
-                average = suggestPrice2.toFloat(),
-                value = totalValue2,
-                pl = totalValue2 - totalInvested
-            )
         }
 
     }
 
     fun clear() {
-        _buyItem1.value = null
-        _buyItem2.value = null
         _averageResult.value = null
         _currentMktValue.value = null
         _suggestSell.value = null

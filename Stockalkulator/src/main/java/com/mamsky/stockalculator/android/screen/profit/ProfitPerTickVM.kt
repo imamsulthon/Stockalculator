@@ -14,8 +14,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfitPerTickVM @Inject constructor(): ViewModel() {
 
-    private val _items = MutableStateFlow(ProfitBundle(0))
-    val allItems: StateFlow<ProfitBundle> = _items.asStateFlow()
+    private val _items = MutableStateFlow<ProfitBundle?>(null)
+    val allItems: StateFlow<ProfitBundle?> = _items.asStateFlow()
 
     fun calculate(price: Int, lot: Int, params: InputModel) {
         val b = ProfitEngineImpl().calculate(price, lot, params.feeForBuy, params.feeForSell)
@@ -23,7 +23,7 @@ class ProfitPerTickVM @Inject constructor(): ViewModel() {
     }
 
     fun clear() {
-        _items.update { ProfitBundle(0) }
+        _items.update { null }
     }
 
 }

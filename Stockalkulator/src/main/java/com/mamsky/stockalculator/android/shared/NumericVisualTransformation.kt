@@ -23,16 +23,32 @@ fun rememberCurrencyVisualTransformation(): VisualTransformation {
     }
 }
 
+@Composable
+fun rememberNumberVisualTransformation(): VisualTransformation {
+    val inspectionMode = LocalInspectionMode.current
+    return remember {
+        if (inspectionMode) {
+            log("inspectionMode1")
+            VisualTransformation.None
+        } else {
+            log("inspectionModeNot")
+            NumberCommaTransformation2()
+        }
+    }
+}
+
 class NumberCommaTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         return TransformedText(
             text = AnnotatedString(text.text.toLongOrNull().formatWithComma()),
             offsetMapping = object : OffsetMapping {
                 override fun originalToTransformed(offset: Int): Int {
+                    log("originalToTransformed $offset - ${text.length}")
                     return text.text.toLongOrNull().formatWithComma().length
                 }
 
                 override fun transformedToOriginal(offset: Int): Int {
+                    log("transformedToOriginal $offset - ${text.length}")
                     return text.length
                 }
             }
@@ -40,5 +56,32 @@ class NumberCommaTransformation : VisualTransformation {
     }
 }
 
-private fun Long?.formatWithComma(): String =
+class NumberCommaTransformation2: VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        return TransformedText(
+            text = AnnotatedString(text.text.toDoubleOrNull().formatWithComma()),
+            offsetMapping = object : OffsetMapping {
+                override fun originalToTransformed(offset: Int): Int {
+                    log("originalToTransformed $text - $offset - ${text.length}")
+                    return text.text.toDoubleOrNull().formatWithComma().length
+                }
+
+                override fun transformedToOriginal(offset: Int): Int {
+                    log("transformedToOriginal $text - $offset - ${text.length}")
+                    return text.length
+                }
+            }
+        )
+    }
+}
+
+fun log(m: String) {
+    println("NumericVisual: $m")
+}
+
+fun Long?.formatWithComma(): String =
+    NumberFormat.getNumberInstance(Locale.US).format(this ?: 0)
+
+
+fun Double?.formatWithComma(): String =
     NumberFormat.getNumberInstance(Locale.US).format(this ?: 0)

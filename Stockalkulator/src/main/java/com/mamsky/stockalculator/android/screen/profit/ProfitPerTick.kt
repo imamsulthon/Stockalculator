@@ -15,9 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,7 +36,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.Route
-import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
+import com.mamsky.stockalculator.android.screen.fee.ChangeFeeModal
 import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.HSpacer
@@ -47,6 +45,7 @@ import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
 import com.mamsky.stockalculator.android.shared.color
+import com.mamsky.stockalculator.android.shared.rememberCurrencyVisualTransformation
 import com.mamsky.stockalculator.data.InputModel
 import com.mamsky.stockalculator.data.ProfitBundle
 import com.mamsky.stockalculator.data.ProfitInRow
@@ -65,7 +64,7 @@ private const val PAGE_TITLE = "Profit Per Tick"
 
 object ProfitPerTick {
 
-    const val PATH = Route.ProfitPerTick
+    private const val PATH = Route.ProfitPerTick
 
     fun route(lots: Int, price: Int) = PATH
         .replace("{lots}", "$lots")
@@ -110,7 +109,7 @@ fun ProfitPerTickPage(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProfitPerTick_Content(
-    bundle: ProfitBundle = ProfitBundle(0),
+    bundle: ProfitBundle? = ProfitBundle(0),
     buy: Int? = null,
     lots: Int? = null,
     onCalculate: (InputModel) -> Unit,
@@ -151,6 +150,8 @@ private fun ProfitPerTick_Content(
                     down = {
                         buyPrice = buyPrice.downFold0()
                     },
+                    visualTransformation = rememberCurrencyVisualTransformation(),
+                    usePrefix = false,
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
@@ -161,7 +162,8 @@ private fun ProfitPerTick_Content(
                     useUpDown = true,
                     up = { lot = lot.upFold() },
                     down = { lot = lot.downFold() },
-                    textStyle = MaterialTheme.typography.bodyMedium,
+                    visualTransformation = rememberCurrencyVisualTransformation(),
+                    textStyle = MaterialTheme.typography.bodySmall,
                     label = "Lot", value = lot.asString(), onValueChange = {
                         lot = it.onlyInt()
                     },
@@ -200,54 +202,51 @@ private fun ProfitPerTick_Content(
             VSpacer(10.dp)
         }
 
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "Result",  style = MaterialTheme.typography.titleMedium)
-                Text(text = "Initial Investment: ${bundle.initialValue.rupiah(true)}",
-                    style = MaterialTheme.typography.labelSmall)
-            }
-        }
-
-        item {
-            Row(Modifier.background(Color.Gray)) {
-                TableCell(text = "Price (Rp)", weight = cw1)
-                TableCell(text = "Loss (%)", weight = cw2)
-                TableCell(text = "Value (Rp)", weight = cw3)
-                HSpacer(10.dp)
-                TableCell(text = "Price (Rp)", weight = c4W)
-                TableCell(text = "Gain (%)", weight = c5W)
-                TableCell(text = "Value (Rp)", weight = c6W)
-            }
-        }
-
-        items(bundle.list) {
-            ItemRes(data = it)
-            Divider(color = Color.LightGray)
-        }
-    }
-
-    if (showModal) {
-        ModalBottomSheet(
-            onDismissRequest = { showModal = false },
-            sheetState = rememberModalBottomSheetState()
-        ) {
-            ChangeFeeContent(
-                onApply = { buy, sell ->
-                    model = model.copy(
-                        feeForBuy = buy,
-                        feeForSell = sell
-                    )
-                    showModal = false
+        if (bundle != null) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "Result",  style = MaterialTheme.typography.titleMedium)
+                    Text(text = "Initial Investment: ${bundle.initialValue.rupiah(true)}",
+                        style = MaterialTheme.typography.labelSmall)
                 }
-            )
+            }
+            item {
+                Row(Modifier.background(Color.Gray)) {
+                    TableCell(text = "Price (Rp)", weight = cw1)
+                    TableCell(text = "Loss (%)", weight = cw2)
+                    TableCell(text = "Value (Rp)", weight = cw3)
+                    HSpacer(10.dp)
+                    TableCell(text = "Price (Rp)", weight = c4W)
+                    TableCell(text = "Gain (%)", weight = c5W)
+                    TableCell(text = "Value (Rp)", weight = c6W)
+                }
+            }
+            items(bundle.list) {
+                ItemRes(data = it)
+                Divider(color = Color.LightGray)
+            }
         }
     }
+
+    ChangeFeeModal(
+        show = showModal,
+        buyFee = brokerFeeBuy,
+        sellFee = brokerFeeSell,
+        onDismiss = { showModal = false },
+        onApply = { b, s ->
+            model = model.copy(
+                feeForBuy = b,
+                feeForSell = s
+            )
+            showModal = false
+        }
+    )
 
 }
 

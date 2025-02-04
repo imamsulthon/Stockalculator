@@ -35,6 +35,7 @@ import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
+import com.mamsky.stockalculator.android.shared.rememberCurrencyVisualTransformation
 import com.mamsky.stockalculator.data.ARType
 import com.mamsky.stockalculator.data.AutoRejection
 import com.mamsky.stockalculator.domain.RejectionEngineImpl
@@ -51,7 +52,7 @@ fun AraArbScreen(
 ) {
     val items by viewModel.allItems.collectAsState()
     MainContent(
-        title = "Auto Rejection (ARA & ARB)",
+        title = "Auto Rejection",
         onBack = navController::popBackStack
     ) {
         AutoRejection_Content(
@@ -99,6 +100,7 @@ fun AutoRejection_Content(
                     onValueChange = {
                         price = it.onlyInt()
                     },
+                    visualTransformation = rememberCurrencyVisualTransformation(),
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )

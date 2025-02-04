@@ -99,31 +99,27 @@ internal fun HomeScreenContent(
                     average.invoke()
                 }
                 VSpacer(10.dp)
-                MenuItem(title = "Average Strategy", iconId = R.drawable.ic_average) {
+                MenuItem(title = "Average Strategy", iconId = R.drawable.ic_location_position) {
                     averageDown.invoke()
                 }
                 VSpacer(10.dp)
-                MenuItem(title = "ARA & ARB", iconId = R.drawable.limited_offer) {
+                MenuItem(title = "Auto Rejection", iconId = R.drawable.limited_offer) {
                     araArb.invoke()
                 }
                 VSpacer(10.dp)
-                MenuItem(title = "Profit Per Tick", iconId = R.drawable.investment) {
+                MenuItem(title = "Profit Per Tick", iconId = R.drawable.ic_profit_increase_chart) {
                     profit.invoke()
                 }
-//                VSpacer(10.dp)
-//                MenuItem(title = "All Calculator", iconId = R.drawable.ic_calculator) {
-//                    allCalculator.invoke()
-//                }
                 VSpacer(10.dp)
-                MenuItem(title = "Profit Strategy", iconId = R.drawable.ic_calculator) {
+                MenuItem(title = "Profit Strategy", iconId = R.drawable.ic_strategy_data_statistic) {
                     profitStrategy.invoke()
                 }
                 VSpacer(10.dp)
-                MenuItem(title = "Create Stock", iconId = R.drawable.ic_calculator) {
+                MenuItem(title = "Create Stock", iconId = R.drawable.ic_pencil_square) {
                     createStock.invoke()
                 }
                 VSpacer(10.dp)
-                MenuItem(title = "Stock List", iconId = R.drawable.ic_calculator) {
+                MenuItem(title = "Stock List", iconId = R.drawable.ic_all_servers) {
                     stockList.invoke()
                 }
             }

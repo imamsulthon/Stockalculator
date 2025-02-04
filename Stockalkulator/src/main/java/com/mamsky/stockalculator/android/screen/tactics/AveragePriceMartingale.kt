@@ -11,13 +11,10 @@ import androidx.compose.material.Text
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,9 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
-import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee
+import com.mamsky.stockalculator.android.screen.fee.ChangeFeeModal
 import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee3
+import com.mamsky.stockalculator.android.screen.fee.rememberBuyFeeDefault
+import com.mamsky.stockalculator.android.screen.fee.rememberSellFeeDefault
 import com.mamsky.stockalculator.android.screen.profit.ProfitPerTick
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.HSpacer
@@ -40,6 +38,7 @@ import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.InputField3
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
+import com.mamsky.stockalculator.android.shared.rememberCurrencyVisualTransformation
 import com.mamsky.stockalculator.data.AverageItem
 import com.mamsky.stockalculator.data.BuyItemModel
 import com.mamsky.stockalculator.engine.priceBuy
@@ -99,11 +98,18 @@ private fun Content(
     var startLot: Int? by remember { mutableStateOf(1) }
     var lotFactor: Int? by remember { mutableStateOf(1) }
     var revertLot by remember { mutableStateOf(false) }
-    var buyingUptrend by remember { mutableStateOf(false) }
+    val (buyingUptrend, selected) = remember { mutableIntStateOf(0) }
 
     var useBroker by remember { mutableStateOf(false) }
     var showFeeDialog by remember { mutableStateOf(false) }
-    var buyFee by remember { mutableFloatStateOf(0f) }
+    var buyFee by rememberBuyFeeDefault()
+    var sellFee by rememberSellFeeDefault()
+
+    val enabledButton by remember(initAveragePrice, initLot, startPrice, endPrice, startLot, lotFactor) {
+        mutableStateOf(initAveragePrice != null && initLot != null && startPrice != null
+                && endPrice != null && foldPrice != null && startLot != null && lotFactor != null
+        )
+    }
 
     LazyColumn(modifier = Modifier.padding(10.dp)) {
         item {
@@ -116,6 +122,8 @@ private fun Content(
                     onValueChange = {
                         initAveragePrice = it.onlyInt()
                     },
+                    usePrefix = false,
+                    visualTransformation = rememberCurrencyVisualTransformation(),
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
@@ -152,19 +160,12 @@ private fun Content(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Buying on Downtrend Prices", style = MaterialTheme.typography.titleSmall)
+                Text(text = "Buying on", style = MaterialTheme.typography.titleSmall)
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Uptrend")
                     HSpacer(5.dp)
-                    Switch(
-                        modifier = Modifier.padding(end = 6.dp),
-                        checked = buyingUptrend,
-                        onCheckedChange = {
-                            buyingUptrend = it
-                        }
-                    )
+                    TrendOption(selectedItemIndex = buyingUptrend, onChange = selected)
                 }
             }
             Row(modifier = Modifier.padding(vertical = 5.dp)) {
@@ -175,6 +176,7 @@ private fun Content(
                     onValueChange = {
                         startPrice = it.onlyInt()
                     },
+                    usePrefix = false,
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
@@ -185,6 +187,7 @@ private fun Content(
                     onValueChange = {
                         endPrice = it.onlyInt()
                     },
+                    usePrefix = false,
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
@@ -257,7 +260,7 @@ private fun Content(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 UseBrokerFee3(
-                    buyFee, buyFee,
+                    buyFee, sellFee,
                     withBrokerFee = useBroker,
                     onCheckChanged = { useBroker = it },
                     onClick = { showFeeDialog = true }
@@ -284,7 +287,7 @@ private fun Content(
         item {
             VSpacer(10.dp)
             ButtonAndClear(
-                title = "Exercise",
+                title = "Exercise", enableButton = enabledButton,
                 onClick = {
                     onCalculate.invoke(
                         AverageItem(initLot.orZero(), initAveragePrice.orZero().toFloat(), initInvested.orZero().toFloat()),
@@ -295,7 +298,7 @@ private fun Content(
                         lotFactor.orZero(),
                         buyFee,
                         revertLot,
-                        buyingUptrend,
+                        buyingUptrend == 1,
                     )
                 },
                 onClickIcon = {
@@ -350,24 +353,22 @@ private fun Content(
         }
 
     }
-    if (showFeeDialog) {
-        ModalBottomSheet(
-            onDismissRequest = { showFeeDialog = false },
-            sheetState = rememberModalBottomSheetState()
-        ) {
-            ChangeFeeContent { buy, _ ->
-                buyFee = buy
-                showFeeDialog = false
-            }
-        }
+    ChangeFeeModal(
+        show = showFeeDialog,
+        buyFee = buyFee,
+        sellFee = sellFee,
+        onDismiss = { showFeeDialog = false },
+    ) { buy, sell ->
+        buyFee = buy
+        sellFee = sell
+        showFeeDialog = false
     }
-
 }
 
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
 private fun Preview() {
-    PageContent("Martingale Content") {
+    PageContent("Martingale") {
         Content(model = AvgDownModel(), events = {},
             navController = rememberNavController(),
             onClear = {}

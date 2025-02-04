@@ -270,7 +270,7 @@ fun SectorModalSub(
         selectedId = selectedId,
         show = show,
         title = "Sub Sector $parentKey",
-        sheetState = rememberModalBottomSheetState(),
+        sheetState = rememberModalBottomSheetState(true),
         onDismiss = onDismiss::invoke,
         onClickItem = onClickItem::invoke
     )
@@ -315,7 +315,7 @@ internal fun SubSectorModal(
                     style = MaterialTheme.typography.titleMedium)
             }
             items(items = list) {
-                Box(modifier = Modifier
+                Box(modifier = Modifier.fillMaxWidth()
                     .clickable { onClickItem.invoke(it.first, it.second) }
                     .padding(bottom = 4.dp)
                 ) {

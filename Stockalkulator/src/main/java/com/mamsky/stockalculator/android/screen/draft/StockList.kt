@@ -27,7 +27,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.VSpacer
-import com.mamsky.stockalculator.utils.asString
 import com.mamsky.stockalculator.utils.rupiah
 
 
@@ -46,10 +45,16 @@ fun MyStocksScreen(
 @Composable
 private fun Content(
     navController: NavController = rememberNavController(),
-    list: List<StockModel>
+    list: List<StockEntity>
 ) {
-    MainContent(title = "All Stocks Screen", onBack = navController::popBackStack) {
+    MainContent(title = "Stocks Draft", onBack = navController::popBackStack) {
         LazyColumn(modifier = Modifier.padding(10.dp)) {
+            if (list.isEmpty()) {
+                item {
+                    Text("No Data", style = MaterialTheme.typography.titleMedium)
+                }
+                return@LazyColumn
+            }
             items(items = list) {
                 ItemsContent(it)
                 VSpacer(10.dp)
@@ -59,7 +64,7 @@ private fun Content(
 }
 
 @Composable
-private fun ItemsContent(item: StockModel) {
+private fun ItemsContent(item: StockEntity) {
     Row(
         modifier = Modifier.fillMaxWidth()
             .border(border = BorderStroke(1.dp, MaterialTheme.colorScheme.primaryContainer), shape = RoundedCornerShape(5.dp))
@@ -71,16 +76,16 @@ private fun ItemsContent(item: StockModel) {
             Text(item.companyName, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
 
-        Column(modifier = Modifier.weight(.5f), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("PER", style = MaterialTheme.typography.bodyMedium)
-            Text(item.per.asString(), style = MaterialTheme.typography.bodySmall)
+        Column(modifier = Modifier.weight(.4f), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("PER", style = MaterialTheme.typography.bodySmall)
+            Text(item.per.toString(), style = MaterialTheme.typography.bodySmall)
         }
-        Column(modifier = Modifier.weight(.5f), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("PBV", style = MaterialTheme.typography.bodyMedium)
-            Text(item.per.asString(), style = MaterialTheme.typography.bodySmall)
+        Column(modifier = Modifier.weight(.4f), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("PBV", style = MaterialTheme.typography.bodySmall)
+            Text(item.per.toString(), style = MaterialTheme.typography.bodySmall)
         }
         Text(modifier = Modifier.weight(1f), textAlign = TextAlign.End,
-            text = item.currentPrice.toInt().rupiah(false, false), style = MaterialTheme.typography.titleMedium)
+            text = item.currentPrice?.toInt().rupiah(false, false), style = MaterialTheme.typography.titleMedium)
     }
 }
 
@@ -90,12 +95,12 @@ private fun Preview() {
     Content(list = getAll())
 }
 
-private fun getAll(): List<StockModel> {
-    val list = mutableListOf<StockModel>()
+private fun getAll(): List<StockEntity> {
+    val list = mutableListOf<StockEntity>()
 
     for (i in 1..10) {
-        val d = StockModel("ABCD", "PT Bukit Asam $i", "Energi dan Gas",
-            "Gas", 0.1f * i, 0.0f * i,  (i * 100).toFloat(), 0.2f * 10 * i, 0.1f * i)
+        val d = StockEntity("ABCD", "PT Bukit Asam $i", "Energi dan Gas", "desc",
+            "Gas", "Coal", 0.0, 0.0, 0, 0.0)
         list.add(d)
     }
     return list

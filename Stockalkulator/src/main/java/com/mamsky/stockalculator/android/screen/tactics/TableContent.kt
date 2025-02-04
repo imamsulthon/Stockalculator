@@ -3,13 +3,27 @@ package com.mamsky.stockalculator.android.screen.tactics
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.mamsky.stockalculator.android.screen.profit.TableCell
 import com.mamsky.stockalculator.android.screen.profit.TableCellItem
+import com.mamsky.stockalculator.android.shared.CustomTab
 import com.mamsky.stockalculator.utils.rupiah
 
+@Composable
+fun TrendOption(selectedItemIndex: Int, onChange: (Int) -> Unit) {
+    CustomTab(
+        modifier = Modifier.wrapContentWidth(),
+        tabWidth = 110.dp,
+        selectedItemIndex = selectedItemIndex,
+        items = listOf("Downtrend", "Uptrend")
+    ) { index ->
+        onChange.invoke(index)
+    }
+}
 
 @Composable
 fun RowItemTitle(

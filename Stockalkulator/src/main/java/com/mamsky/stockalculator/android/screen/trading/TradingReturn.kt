@@ -9,21 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,18 +32,18 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
+import com.mamsky.stockalculator.android.screen.fee.ChangeFeeModal
 import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee
 import com.mamsky.stockalculator.android.screen.fee.default
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
 import com.mamsky.stockalculator.android.shared.Container
-import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.InputField2
 import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
 import com.mamsky.stockalculator.android.shared.color
+import com.mamsky.stockalculator.android.shared.rememberNumberVisualTransformation
 import com.mamsky.stockalculator.data.InputModel
 import com.mamsky.stockalculator.data.ResultBuy
 import com.mamsky.stockalculator.data.ResultCalculation
@@ -83,7 +75,7 @@ fun TradingReturnScreen(
             buyResult = buyData,
             sellResult = sellData,
             resultCalculation = result,
-            onClear = {}
+            onClear = viewModel::clear
         )
     }
 }
@@ -104,7 +96,7 @@ fun TradingReturnPage(
             buyResult = buyData,
             sellResult = sellData,
             resultCalculation = result,
-            onClear = {}
+            onClear = viewModel::clear
         )
     }
 }
@@ -145,6 +137,7 @@ private fun TradingReturn_Content(
                     label = "Buy Price", value = buyPrice.asString(), onValueChange = {
                         buyPrice = it.onlyInt()
                     },
+                    visualTransformation = rememberNumberVisualTransformation(),
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
@@ -154,6 +147,7 @@ private fun TradingReturn_Content(
                     label = "Sell Price", value = sellPrice.asString(), onValueChange = {
                         sellPrice = it.onlyInt()
                     },
+                    visualTransformation = rememberNumberVisualTransformation(),
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
@@ -211,21 +205,17 @@ private fun TradingReturn_Content(
         }
     }
 
-    if (showModal) {
-        ModalBottomSheet(
-            onDismissRequest = { showModal = false },
-            sheetState = rememberModalBottomSheetState()
-        ) {
-            ChangeFeeContent(
-                onApply = { buy, sell ->
-                    model = model.copy(
-                        feeForBuy = buy,
-                        feeForSell = sell
-                    )
-                    showModal = false
-                }
-            )
-        }
+    ChangeFeeModal(
+        show = showModal,
+        buyFee = model.feeForBuy,
+        sellFee = model.feeForSell,
+        onDismiss = { showModal = false }
+    ) {       buy, sell ->
+        model = model.copy(
+            feeForBuy = buy,
+            feeForSell = sell
+        )
+        showModal = false
     }
 
 }
@@ -234,7 +224,7 @@ private fun TradingReturn_Content(
 fun CalculationResult(
     data: ResultCalculation,
 ) {
-    CardContainer(title = "Calculation Result", onRemove = {}, borderColor = Color.Magenta,
+    CardContainer(title = "Calculation Result", onRemove = {}, borderColor = Color.Blue,
         first = {
             Container {
                 Text(text = "Status", style = MaterialTheme.typography.bodyMedium)

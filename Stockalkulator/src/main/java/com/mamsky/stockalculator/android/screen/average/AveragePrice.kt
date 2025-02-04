@@ -56,6 +56,7 @@ import com.mamsky.stockalculator.android.shared.InputField3
 import com.mamsky.stockalculator.android.shared.MainContent
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
+import com.mamsky.stockalculator.android.shared.rememberCurrencyVisualTransformation
 import com.mamsky.stockalculator.data.AverageItem
 import com.mamsky.stockalculator.data.BuyItemModel
 import com.mamsky.stockalculator.data.InputModel
@@ -75,7 +76,7 @@ fun AverageStrategyScreen2(
     navController: NavController = rememberNavController(),
 ) {
     var tabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Regular", "Fibonacci", "Martingale")
+    val tabs = listOf("Dollar Cost", "Arithmetic", "Fibonacci", "Martingale")
     val pagerState = rememberPagerState { tabs.size }
 
     LaunchedEffect(pagerState) {
@@ -91,7 +92,6 @@ fun AverageStrategyScreen2(
             ScrollableTabRow(
                 modifier = Modifier.fillMaxWidth(),
                 edgePadding = 8.dp,
-//                containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 selectedTabIndex = tabIndex
             ) {
                 tabs.forEachIndexed { index, title ->
@@ -104,9 +104,10 @@ fun AverageStrategyScreen2(
             }
             HorizontalPager(state = pagerState) {
                 when (tabIndex) {
-                    0 -> AverageDownPriceTabContent(navController)
-                    1 -> FibonacciTabContent(navController)
-                    2 -> MartingaleContent(navController)
+                    0 -> AveragePriceTabContent()
+                    1 -> AverageDownPriceTabContent(navController)
+                    2 -> FibonacciTabContent(navController)
+                    3 -> MartingaleContent(navController)
                 }
             }
         }
@@ -193,7 +194,7 @@ fun AveragePrice_Content(
                     label = "Price", value = buyPrice.orEmpty(), onValueChange = {
                         buyPrice = it
                     },
-                    usePrefix = true,
+                    usePrefix = false,
                     useUpDown = true,
                     up = {
                         val v = buyPrice.intOrNull() ?: 0
@@ -203,6 +204,7 @@ fun AveragePrice_Content(
                         val v = buyPrice.intOrNull() ?: 0
                         buyPrice = v.downFold0().asString()
                     },
+                    visualTransformation = rememberCurrencyVisualTransformation(),
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
@@ -211,6 +213,7 @@ fun AveragePrice_Content(
                     usePrefix = false,
                     modifier = Modifier.weight(1f),
                     useUpDown = true,
+                    visualTransformation = rememberCurrencyVisualTransformation(),
                     up = {
                         lot = lot?.toIntOrNull().upFold().toString()
                     },

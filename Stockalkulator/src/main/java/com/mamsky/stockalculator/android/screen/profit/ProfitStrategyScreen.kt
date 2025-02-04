@@ -1,4 +1,4 @@
-package com.mamsky.stockalculator.android.screen.tactics
+package com.mamsky.stockalculator.android.screen.profit
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,7 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,12 +31,12 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.mamsky.stockalculator.android.screen.fee.ChangeFeeModal
 import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee
-import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee3
 import com.mamsky.stockalculator.android.screen.fee.rememberBuyFeeDefault
 import com.mamsky.stockalculator.android.screen.fee.rememberSellFeeDefault
 import com.mamsky.stockalculator.android.screen.fee.setWith
-import com.mamsky.stockalculator.android.screen.profit.TableCell
+import com.mamsky.stockalculator.android.screen.tactics.RowItemRes
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
+import com.mamsky.stockalculator.android.shared.CustomTab
 import com.mamsky.stockalculator.android.shared.HSpacer
 import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.InputField3
@@ -49,7 +48,6 @@ import com.mamsky.stockalculator.engine.priceBuy
 import com.mamsky.stockalculator.utils.asString
 import com.mamsky.stockalculator.utils.downFold
 import com.mamsky.stockalculator.utils.downFold0
-import com.mamsky.stockalculator.utils.onlyFloat
 import com.mamsky.stockalculator.utils.onlyInt
 import com.mamsky.stockalculator.utils.orZero
 import com.mamsky.stockalculator.utils.rupiah
@@ -74,8 +72,8 @@ fun ProfitStrategyScreen(
         suggestSell = suggestSell,
         suggestSell2 = suggestSell2,
         onClear = viewModel::clear,
-        onCalculate = { b1, b2, f, s ->
-            viewModel.calculate(b1, b2, f, s)
+        onCalculate = { b1, b2, f, s1,  s2 ->
+            viewModel.calculate(b1, b2, f, s1, s2)
         }
     )
 
@@ -90,12 +88,13 @@ private fun Content(
     suggestSell: AverageItem? = null,
     suggestSell2: AverageItem? = null,
     onClear: () -> Unit,
-    onCalculate: (AverageItem, AverageItem, Float, Int) -> Unit,
+    onCalculate: (AverageItem, AverageItem, Float, Int, Float?) -> Unit,
 ) {
 
     val transformation = rememberCurrencyVisualTransformation()
 
-    var targetProfitType by remember { mutableStateOf(false) }
+    val targetProfitType2 = listOf("Rp", "%")
+    val (selectedTarget, setSelectedTarget) = remember { mutableIntStateOf(0) }
 
     var initAveragePrice: Int? by remember { mutableStateOf(null) }
     var initLot: Int? by remember { mutableStateOf(null) }
@@ -109,13 +108,17 @@ private fun Content(
         mutableIntStateOf(price1.orZero().priceBuy(lot1 ?: 0).toInt())
     }
 
-    var targetProfit1: Int? by remember { mutableStateOf(10000) }
-    var targetPercentage: Float? by remember { mutableStateOf(null) }
+    var targetProfit1: Int? by remember { mutableStateOf(null) }
+    var targetPercentage: String? by remember { mutableStateOf(null) }
 
     var useBrokerFee by remember { mutableStateOf(false) }
     var buyFee by rememberBuyFeeDefault()
     var sellFee by rememberSellFeeDefault()
     var showFeeDialog by remember { mutableStateOf(false) }
+
+    val enableButton by remember(initAveragePrice, initLot, price1, lot1) {
+        mutableStateOf(initAveragePrice != null && initLot != null && price1 != null && lot1 != null)
+    }
 
     MainContent("Profit Strategy", onBack = navController::popBackStack) {
         LazyColumn(modifier = Modifier.padding(10.dp)) {
@@ -174,6 +177,7 @@ private fun Content(
                         usePrefix = false,
                         up = { price1 = price1.upFold0() },
                         down = { price1 = price1.downFold0() },
+                        visualTransformation = rememberCurrencyVisualTransformation(),
                         textStyle = MaterialTheme.typography.bodyMedium,
                         imeAction = ImeAction.Next,
                     )
@@ -221,52 +225,56 @@ private fun Content(
                         text = "Target Profit",
                         style = MaterialTheme.typography.titleMedium
                     )
-                    Row(modifier = Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Rp/%", style = MaterialTheme.typography.bodySmall)
-                        HSpacer(2.dp)
-                        Switch(
-                            checked = targetProfitType,
-                            onCheckedChange = { targetProfitType = it }
-                        )
-                    }
+
+                    CustomTab(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        items = targetProfitType2,
+                        selectedItemIndex = selectedTarget,
+                        tabWidth = 60.dp,
+                        onClick = setSelectedTarget,
+                    )
                 }
 
-                InputField(
-                    modifier = Modifier.fillMaxWidth(),
-                    label = "Value",
-                    value = targetProfit1.asString(),
-                    onValueChange = {
-                        targetProfit1 = it.onlyInt()
-                    },
-                    keyboardType = KeyboardType.Decimal,
-                    enabled = !targetProfitType,
-                    visualTransformation = transformation,
-                    textStyle = MaterialTheme.typography.bodySmall
-                )
-
-                InputField(
-                    modifier = Modifier.fillMaxWidth(),
-                    label = "Percentage",
-                    value = targetPercentage.asString(),
-                    prefix = "%",
-                    onValueChange = {
-                        targetPercentage = it.onlyFloat()
-                    },
-                    enabled = targetProfitType,
-                    textStyle = MaterialTheme.typography.bodySmall
-                )
+                Row {
+                    InputField(
+                        modifier = Modifier.fillMaxWidth().weight(.6f),
+                        label = "Value",
+                        value = targetProfit1.asString(),
+                        onValueChange = {
+                            targetProfit1 = it.onlyInt()
+                        },
+                        keyboardType = KeyboardType.Decimal,
+                        enabled = selectedTarget == 0,
+                        visualTransformation = transformation,
+                        textStyle = MaterialTheme.typography.bodyMedium
+                    )
+                    InputField(
+                        modifier = Modifier.fillMaxWidth().padding(start = 10.dp).weight(.4f),
+                        label = "Percentage",
+                        value = targetPercentage.orEmpty(),
+                        prefix = "%",
+                        onValueChange = {
+                            targetPercentage = it
+                        },
+                        enabled = selectedTarget == 1,
+                        keyboardType = KeyboardType.Decimal,
+                        textStyle = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
 
             item {
                 VSpacer()
                 ButtonAndClear(
                     "Calculate",
+                    enableButton = enableButton,
                     onClick = {
                         onCalculate.invoke(
                             AverageItem(initLot.orZero(), initAveragePrice.orZero().toFloat(), initInvested.orZero().toFloat()),
                             AverageItem(lot1.orZero(), price1.orZero().toFloat(), additionInvested.orZero().toFloat()),
                             useBrokerFee setWith buyFee,
-                            targetProfit1.orZero()
+                            targetProfit1.orZero(),
+                            if (selectedTarget == 0) null else targetPercentage?.toFloatOrNull()
                         )
                     },
                     onClickIcon = {
@@ -290,7 +298,7 @@ private fun Content(
                 RowItemRes(price1.orZero(), lot1.orZero(), additionInvested.orZero())
                 VSpacer(2.dp)
                 if (avgResult != null) {
-                    RowItemTitle3("Average Price", "Total Lot", "Value")
+                    RowItemTitle3("Average Price", "Total Lot", "Total Investment")
                     RowItemRes(avgResult.average.toInt(), avgResult.lot, avgResult.value.toInt())
                 }
 
@@ -299,8 +307,8 @@ private fun Content(
                     ResultCard(
                         label1 = "Current Price",
                         value1 = currentValue.average.toInt().asString(),
-                        label2 = currentValue.lot.asString(),
-                        value2 = "Lot",
+                        value2 = currentValue.lot.asString(),
+                        label2 = "Lot",
                         label3 = currentValue.value.rupiah(false),
                         value3 = (currentValue.value - (avgResult?.value ?: 0f)).rupiah(false)
                     )
@@ -319,6 +327,8 @@ private fun Content(
             }
             if (suggestSell2 != null) {
                 item {
+                    VSpacer(10.dp)
+                    Text("or", style = MaterialTheme.typography.titleSmall)
                     VSpacer(10.dp)
                     ResultCard2(
                         value1 = suggestSell2.average.toInt().asString(),
@@ -426,7 +436,7 @@ private fun RowItemTitle3(
 @Preview(showBackground = false, showSystemUi = true)
 @Composable
 private fun Preview() {
-    Content(rememberNavController(), onCalculate = { a,b,c,d -> },
+    Content(rememberNavController(), onCalculate = { _,_,_,_,_-> },
         avgResult = AverageItem(1, 10f, 110f),
         currentValue = AverageItem(1, 10f, 110f),
         suggestSell = AverageItem(2, 3000f, 2000f),

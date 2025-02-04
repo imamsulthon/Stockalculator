@@ -11,6 +11,7 @@ fun Int?.isZeroOrNull() = if (this == null) true else this <= 0
 fun Int?.orZero(): Int = this ?: 0
 fun Int?.asString(): String = this?.toString() ?: ""
 fun Float?.asString(): String = this?.toString() ?: ""
+fun Double?.asString(): String = this?.toString() ?: ""
 
 fun Int?.upFold(f: Int = 1, limit: Int? = null): Int {
     if (this == null) return 0

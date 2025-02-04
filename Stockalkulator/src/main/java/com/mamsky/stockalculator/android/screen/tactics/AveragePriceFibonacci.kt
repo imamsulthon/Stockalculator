@@ -11,9 +11,7 @@ import androidx.compose.material.Text
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.mamsky.stockalculator.android.screen.fee.ChangeFeeContent
+import com.mamsky.stockalculator.android.screen.fee.ChangeFeeModal
 import com.mamsky.stockalculator.android.screen.fee.UseBrokerFee3
 import com.mamsky.stockalculator.android.screen.profit.ProfitPerTick
 import com.mamsky.stockalculator.android.shared.ButtonAndClear
@@ -38,6 +36,7 @@ import com.mamsky.stockalculator.android.shared.InputField
 import com.mamsky.stockalculator.android.shared.InputField3
 import com.mamsky.stockalculator.android.shared.PageContent
 import com.mamsky.stockalculator.android.shared.VSpacer
+import com.mamsky.stockalculator.android.shared.rememberCurrencyVisualTransformation
 import com.mamsky.stockalculator.data.AverageItem
 import com.mamsky.stockalculator.data.BuyItemModel
 import com.mamsky.stockalculator.domain.sheet
@@ -90,11 +89,15 @@ fun FibonacciContent(
     val initInvested: Int? by remember(initLot, initAveragePrice) {
         mutableIntStateOf(initLot.orZero().sheet() * initAveragePrice.orZero())
     }
-    var buyingUptrend by remember { mutableStateOf(false) }
-//
+    val (buyingUptrend, selected) = remember { mutableIntStateOf(0) }
     var useBroker by remember { mutableStateOf(false) }
     var showFeeDialog by remember { mutableStateOf(false) }
-//    var buyFee by remember { mutableFloatStateOf(0f) }
+    val enabledButton by remember(initAveragePrice, initLot, model.startPrice, model.endPrice,
+        model.foldPrice, model.factorLot
+    ) {
+        mutableStateOf(initAveragePrice != null && initLot != null && model.startPrice != null
+            && model.endPrice != null && model.foldPrice != null && model.factorLot != null)
+    }
 
     LazyColumn(modifier = Modifier.padding(10.dp)) {
         item {
@@ -107,6 +110,7 @@ fun FibonacciContent(
                     onValueChange = {
                         initAveragePrice = it.onlyInt()
                     },
+                    visualTransformation = rememberCurrencyVisualTransformation(),
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
@@ -143,19 +147,12 @@ fun FibonacciContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Buying on Downtrend Prices", style = MaterialTheme.typography.titleSmall)
+                Text(text = "Buying on", style = MaterialTheme.typography.titleSmall)
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Uptrend")
                     HSpacer(5.dp)
-                    Switch(
-                        modifier = Modifier.padding(end = 6.dp),
-                        checked = buyingUptrend,
-                        onCheckedChange = {
-                            buyingUptrend = it
-                        }
-                    )
+                    TrendOption(selectedItemIndex = buyingUptrend, onChange = selected)
                 }
             }
             Row(modifier = Modifier.padding(vertical = 5.dp)) {
@@ -165,8 +162,9 @@ fun FibonacciContent(
                     value = model.startPrice.asString(),
                     onValueChange = {
                         event.invoke(AvgFormEvent.startPrice(it.onlyInt()))
-//                        startPrice = it.onlyInt()
                     },
+                    usePrefix = false,
+                    visualTransformation = rememberCurrencyVisualTransformation(),
                     textStyle = MaterialTheme.typography.bodyMedium,
                     imeAction = ImeAction.Next
                 )
@@ -174,6 +172,8 @@ fun FibonacciContent(
                     modifier = Modifier.weight(1f).padding(end = 5.dp),
                     label = "End Price",
                     value = model.endPrice.asString(),
+                    usePrefix = false,
+                    visualTransformation = rememberCurrencyVisualTransformation(),
                     onValueChange = {
                         event.invoke(AvgFormEvent.endPrice(it.onlyInt()))
                     },
@@ -256,17 +256,17 @@ fun FibonacciContent(
         item {
             VSpacer(10.dp)
             ButtonAndClear(
-                title = "Exercise",
+                title = "Exercise", enableButton = enabledButton,
                 onClick = {
                     onCalculate.invoke(
                         AverageItem(initLot.orZero(), initAveragePrice.orZero().toFloat(), initInvested.orZero().toFloat()),
                         model.startPrice.orZero(),
                         model.endPrice.orZero(),
-                        model. foldPrice.orZero(),
+                        model.foldPrice.orZero(),
                         model.factorLot.orZero(),
                         model.fee,
                         model.revertLot,
-                        buyingUptrend,
+                        buyingUptrend == 1,
                     )
                 },
                 onClickIcon = {
@@ -314,16 +314,14 @@ fun FibonacciContent(
         }
 
     }
-    if (showFeeDialog) {
-        ModalBottomSheet(
-            onDismissRequest = { showFeeDialog = false },
-            sheetState = rememberModalBottomSheetState()
-        ) {
-            ChangeFeeContent { buy, _ ->
-                event.invoke(AvgFormEvent.fee(buy))
-                showFeeDialog = false
-            }
-        }
+    ChangeFeeModal(
+        show = showFeeDialog,
+        buyFee = model.fee,
+        sellFee = model.fee,
+        onDismiss = { showFeeDialog = false },
+    ) { buy, _ ->
+        event.invoke(AvgFormEvent.fee(buy))
+        showFeeDialog = false
     }
 
 }
